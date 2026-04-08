@@ -276,6 +276,32 @@ class ProductController extends Controller
     // =================================================================================
     // [BARU] FUNGSI GENERATE PRE-SIGNED URL UNTUK DIRECT UPLOAD DARI REACT KE S3
     // =================================================================================
+    // public function getPresignedUrl(Request $request)
+    // {
+    //     $request->validate([
+    //         'extension' => 'required|string',
+    //         'content_type' => 'required|string'
+    //     ]);
+
+    //     // Buat nama file unik
+    //     $filename = 'products/' . Str::random(40) . '.' . $request->extension;
+
+    //     // Buat URL sementara (berlaku 15 menit) untuk upload langsung dari browser ke S3
+    //     $uploadUrl = Storage::disk('s3')->temporaryUploadUrl(
+    //         $filename,
+    //         now()->addMinutes(15),
+    //         ['ContentType' => $request->content_type] // Wajib agar S3 menerima file dengan benar
+    //     );
+
+    //     // URL publik final untuk disimpan di database
+    //     $fileUrl = env('AWS_URL') . '/' . $filename;
+
+    //     return response()->json([
+    //         'upload_url' => $uploadUrl,
+    //         'file_url' => $fileUrl
+    //     ]);
+    // }
+
     public function getPresignedUrl(Request $request)
     {
         $request->validate([
@@ -283,21 +309,20 @@ class ProductController extends Controller
             'content_type' => 'required|string'
         ]);
 
-        // Buat nama file unik
         $filename = 'products/' . Str::random(40) . '.' . $request->extension;
 
-        // Buat URL sementara (berlaku 15 menit) untuk upload langsung dari browser ke S3
-        $uploadUrl = Storage::disk('s3')->temporaryUploadUrl(
+        // temporaryUploadUrl mengembalikan ARRAY ['url' => '...', 'headers' => [...]]
+        $uploadResponse = Storage::disk('s3')->temporaryUploadUrl(
             $filename,
             now()->addMinutes(15),
-            ['ContentType' => $request->content_type] // Wajib agar S3 menerima file dengan benar
+            ['ContentType' => $request->content_type]
         );
 
-        // URL publik final untuk disimpan di database
         $fileUrl = env('AWS_URL') . '/' . $filename;
 
         return response()->json([
-            'upload_url' => $uploadUrl,
+            'upload_url' => $uploadResponse['url'],          // Ambil URL-nya saja (String)
+            'upload_headers' => $uploadResponse['headers'],  // Ambil Header wajib S3-nya
             'file_url' => $fileUrl
         ]);
     }
