@@ -112,19 +112,207 @@ class ProductController extends Controller
         }
     }
 
+    // public function store(Request $request)
+    // {
+    //     // 1. Validasi Field Gycora
+    //     $validator = Validator::make($request->all(), [
+    //         'category_id' => 'required|exists:categories,id',
+    //         'sku' => 'required|unique:products',
+    //         'name' => 'required|string|max:255',
+    //         // slug bisa di-generate otomatis di Model atau Controller
+    //         'description' => 'nullable|string',
+    //         'benefits' => 'nullable|string',
+    //         'price' => 'required|numeric|min:0',
+    //         'stock' => 'required|integer|min:0',
+    //         'image' => 'nullable|image', // Menggunakan input file 'image' dari frontend
+    //     ]);
+
+    //     if ($validator->fails()) {
+    //         return response()->json($validator->errors(), 422);
+    //     }
+
+    //     DB::beginTransaction();
+    //     try {
+    //         // Ambil semua data selain file gambar
+    //         $data = $request->except(['image']);
+
+    //         // Generate Slug Otomatis dari nama jika tidak dikirim dari frontend
+    //         if (empty($data['slug'])) {
+    //             $data['slug'] = Str::slug($data['name']) . '-' . Str::random(5);
+    //         }
+
+    //         // 1. Upload & Optimasi Gambar Utama
+    //         if ($request->hasFile('image')) {
+    //             // Helper function mengembalikan path relatif. Kita masukkan ke 'image_url' sesuai Model Gycora
+    //             $data['image_url'] = $this->optimizeAndSaveImage($request->file('image'), 'products');
+    //         }
+
+    //         // Simpan ke DB
+    //         $product = Product::create($data);
+
+    //         // Buat batch stok pertama kali
+    //         if ($request->stock > 0) {
+    //             $batchCode = 'STK-'.now()->format('YmdHis').'-'.strtoupper(Str::random(4));
+    //             ProductStock::create([
+    //                 'product_id' => $product->id,
+    //                 'batch_code' => $batchCode,
+    //                 'quantity' => $request->stock,
+    //                 'initial_quantity' => $request->stock,
+    //             ]);
+    //         }
+
+    //         DB::commit();
+
+    //         // Bersihkan Cache agar Katalog di Web User langsung ter-update!
+    //         Cache::tags(['catalog'])->flush();
+
+    //         return response()->json($product, 201);
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+    //         return response()->json(['message' => $e->getMessage()], 500);
+    //     }
+    // }
+
+
+    // public function update(Request $request, $id)
+    // {
+    //     $product = Product::findOrFail($id);
+
+    //     $validator = Validator::make($request->all(), [
+    //         'category_id' => 'required|exists:categories,id',
+    //         'sku' => "required|unique:products,sku,$id", // SKU harus unique kecuali untuk produk ini sendiri
+    //         'name' => 'required|string|max:255',
+    //         'description' => 'nullable|string',
+    //         'benefits' => 'nullable|string',
+    //         'price' => 'required|numeric|min:0',
+    //         'image' => 'nullable|image',
+    //     ]);
+
+    //     if ($validator->fails()) {
+    //         return response()->json($validator->errors(), 422);
+    //     }
+
+    //     // Jangan izinkan update stok dari endpoint ini (Stok diupdate lewat ProductStockController)
+    //     $data = $request->except(['image', 'stock', '_method']);
+
+    //     // Jika nama diubah, ubah slug-nya juga
+    //     if ($request->has('name') && $request->name !== $product->name) {
+    //         $data['slug'] = Str::slug($data['name']) . '-' . Str::random(5);
+    //     }
+
+    //     // 1. Hapus & Ganti Gambar Utama
+    //     if ($request->hasFile('image')) {
+    //         if ($product->image_url) {
+    //             $oldPath = str_replace('/storage/', '', $product->image_url);
+    //             Storage::disk('public')->delete($oldPath);
+    //         }
+    //         // Gunakan fungsi helper untuk kompresi dan set ke field 'image_url'
+    //         $data['image_url'] = $this->optimizeAndSaveImage($request->file('image'), 'products');
+    //     }
+
+    //     $product->update($data);
+
+    //     Cache::tags(['catalog'])->flush();
+
+    //     return response()->json($product, 200);
+    // }
+
+
+    // public function destroy($id)
+    // {
+    //     // Gycora tidak memiliki field 'status' = 'inactive' berdasarkan Model yang Anda berikan.
+    //     // Jika Anda ingin soft delete, pastikan tabel `products` memiliki kolom `deleted_at` (SoftDeletes).
+    //     // Untuk sekarang, saya asumsikan ini melakukan hard delete atau Anda perlu menambahkan trait SoftDeletes di Model.
+
+    //     $product = Product::findOrFail($id);
+
+    //     // Hapus file gambar jika ada
+    //     if ($product->image_url) {
+    //         $oldPath = str_replace('/storage/', '', $product->image_url);
+    //         Storage::disk('public')->delete($oldPath);
+    //     }
+
+    //     $product->delete();
+
+    //     // Bersihkan Cache!
+    //     Cache::tags(['catalog'])->flush();
+
+    //     return response()->json(['message' => 'Product deleted'], 200);
+    // }
+
+    // public function restore($id)
+    // {
+    //     // Fungsi ini hanya bekerja jika Anda menggunakan SoftDeletes di model Product
+    //     $product = Product::withTrashed()->findOrFail($id);
+    //     $product->restore();
+
+    //     Cache::tags(['catalog'])->flush();
+
+    //     return response()->json(['message' => 'Product activated/restored'], 200);
+    // }
+
+    // public function forceDelete($id)
+    // {
+    //     // Gunakan withTrashed() jika menggunakan SoftDeletes
+    //     $product = Product::withTrashed()->findOrFail($id);
+
+    //     if ($product->image_url) {
+    //         $oldPath = str_replace('/storage/', '', $product->image_url);
+    //         Storage::disk('public')->delete($oldPath);
+    //     }
+
+    //     try {
+    //         $product->forceDelete(); // Menghapus permanen dari DB
+
+    //         Cache::tags(['catalog'])->flush();
+
+    //         return response()->json(['message' => 'Product deleted permanently'], 200);
+
+    //     } catch (\Illuminate\Database\QueryException $e) {
+    //         return response()->json(['message' => 'Produk tidak bisa dihapus karena sudah memiliki riwayat transaksi'], 422);
+    //     }
+    // }
+
+    // =================================================================================
+    // [BARU] FUNGSI GENERATE PRE-SIGNED URL UNTUK DIRECT UPLOAD DARI REACT KE S3
+    // =================================================================================
+    public function getPresignedUrl(Request $request)
+    {
+        $request->validate([
+            'extension' => 'required|string',
+            'content_type' => 'required|string'
+        ]);
+
+        // Buat nama file unik
+        $filename = 'products/' . Str::random(40) . '.' . $request->extension;
+
+        // Buat URL sementara (berlaku 15 menit) untuk upload langsung dari browser ke S3
+        $uploadUrl = Storage::disk('s3')->temporaryUploadUrl(
+            $filename,
+            now()->addMinutes(15),
+            ['ContentType' => $request->content_type] // Wajib agar S3 menerima file dengan benar
+        );
+
+        // URL publik final untuk disimpan di database
+        $fileUrl = env('AWS_URL') . '/' . $filename;
+
+        return response()->json([
+            'upload_url' => $uploadUrl,
+            'file_url' => $fileUrl
+        ]);
+    }
+
     public function store(Request $request)
     {
-        // 1. Validasi Field Gycora
         $validator = Validator::make($request->all(), [
             'category_id' => 'required|exists:categories,id',
             'sku' => 'required|unique:products',
             'name' => 'required|string|max:255',
-            // slug bisa di-generate otomatis di Model atau Controller
             'description' => 'nullable|string',
             'benefits' => 'nullable|string',
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
-            'image' => 'nullable|image', // Menggunakan input file 'image' dari frontend
+            'image_url' => 'nullable|string', // [PERBAIKAN] Sekarang menerima URL dari Frontend
         ]);
 
         if ($validator->fails()) {
@@ -133,24 +321,14 @@ class ProductController extends Controller
 
         DB::beginTransaction();
         try {
-            // Ambil semua data selain file gambar
-            $data = $request->except(['image']);
+            $data = $request->all();
 
-            // Generate Slug Otomatis dari nama jika tidak dikirim dari frontend
             if (empty($data['slug'])) {
                 $data['slug'] = Str::slug($data['name']) . '-' . Str::random(5);
             }
 
-            // 1. Upload & Optimasi Gambar Utama
-            if ($request->hasFile('image')) {
-                // Helper function mengembalikan path relatif. Kita masukkan ke 'image_url' sesuai Model Gycora
-                $data['image_url'] = $this->optimizeAndSaveImage($request->file('image'), 'products');
-            }
-
-            // Simpan ke DB
             $product = Product::create($data);
 
-            // Buat batch stok pertama kali
             if ($request->stock > 0) {
                 $batchCode = 'STK-'.now()->format('YmdHis').'-'.strtoupper(Str::random(4));
                 ProductStock::create([
@@ -162,8 +340,6 @@ class ProductController extends Controller
             }
 
             DB::commit();
-
-            // Bersihkan Cache agar Katalog di Web User langsung ter-update!
             Cache::tags(['catalog'])->flush();
 
             return response()->json($product, 201);
@@ -173,73 +349,59 @@ class ProductController extends Controller
         }
     }
 
-
     public function update(Request $request, $id)
     {
         $product = Product::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
             'category_id' => 'required|exists:categories,id',
-            'sku' => "required|unique:products,sku,$id", // SKU harus unique kecuali untuk produk ini sendiri
+            'sku' => "required|unique:products,sku,$id",
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'benefits' => 'nullable|string',
             'price' => 'required|numeric|min:0',
-            'image' => 'nullable|image',
+            'image_url' => 'nullable|string', // [PERBAIKAN] Sekarang menerima URL
         ]);
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
 
-        // Jangan izinkan update stok dari endpoint ini (Stok diupdate lewat ProductStockController)
-        $data = $request->except(['image', 'stock', '_method']);
+        $data = $request->except(['stock', '_method']);
 
-        // Jika nama diubah, ubah slug-nya juga
         if ($request->has('name') && $request->name !== $product->name) {
             $data['slug'] = Str::slug($data['name']) . '-' . Str::random(5);
         }
 
-        // 1. Hapus & Ganti Gambar Utama
-        if ($request->hasFile('image')) {
-            if ($product->image_url) {
-                $oldPath = str_replace('/storage/', '', $product->image_url);
-                Storage::disk('public')->delete($oldPath);
-            }
-            // Gunakan fungsi helper untuk kompresi dan set ke field 'image_url'
-            $data['image_url'] = $this->optimizeAndSaveImage($request->file('image'), 'products');
+        // Hapus gambar lama dari S3 jika frontend mengirimkan gambar baru
+        if ($request->has('image_url') && $request->image_url !== $product->image_url && $product->image_url) {
+            $oldKey = str_replace(env('AWS_URL') . '/', '', $product->image_url);
+            Storage::disk('s3')->delete($oldKey);
         }
 
         $product->update($data);
-
         Cache::tags(['catalog'])->flush();
 
         return response()->json($product, 200);
     }
 
-
     public function destroy($id)
     {
-        // Gycora tidak memiliki field 'status' = 'inactive' berdasarkan Model yang Anda berikan.
-        // Jika Anda ingin soft delete, pastikan tabel `products` memiliki kolom `deleted_at` (SoftDeletes).
-        // Untuk sekarang, saya asumsikan ini melakukan hard delete atau Anda perlu menambahkan trait SoftDeletes di Model.
-
         $product = Product::findOrFail($id);
 
-        // Hapus file gambar jika ada
+        // Hapus file gambar dari S3
         if ($product->image_url) {
-            $oldPath = str_replace('/storage/', '', $product->image_url);
-            Storage::disk('public')->delete($oldPath);
+            $oldKey = str_replace(env('AWS_URL') . '/', '', $product->image_url);
+            Storage::disk('s3')->delete($oldKey);
         }
 
         $product->delete();
-
-        // Bersihkan Cache!
         Cache::tags(['catalog'])->flush();
 
         return response()->json(['message' => 'Product deleted'], 200);
     }
 
+    // ... (Fungsi restore & forceDelete menggunakan logika S3 delete yang sama) ...
     public function restore($id)
     {
         // Fungsi ini hanya bekerja jika Anda menggunakan SoftDeletes di model Product
@@ -253,21 +415,17 @@ class ProductController extends Controller
 
     public function forceDelete($id)
     {
-        // Gunakan withTrashed() jika menggunakan SoftDeletes
         $product = Product::withTrashed()->findOrFail($id);
 
         if ($product->image_url) {
-            $oldPath = str_replace('/storage/', '', $product->image_url);
-            Storage::disk('public')->delete($oldPath);
+            $oldKey = str_replace(env('AWS_URL') . '/', '', $product->image_url);
+            Storage::disk('s3')->delete($oldKey);
         }
 
         try {
-            $product->forceDelete(); // Menghapus permanen dari DB
-
+            $product->forceDelete();
             Cache::tags(['catalog'])->flush();
-
             return response()->json(['message' => 'Product deleted permanently'], 200);
-
         } catch (\Illuminate\Database\QueryException $e) {
             return response()->json(['message' => 'Produk tidak bisa dihapus karena sudah memiliki riwayat transaksi'], 422);
         }
