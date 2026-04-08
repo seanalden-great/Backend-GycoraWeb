@@ -535,6 +535,31 @@ class ProductController extends Controller
     // =================================================================================
     // FUNGSI GENERATE PRE-SIGNED URL UNTUK DIRECT UPLOAD DARI REACT KE S3
     // =================================================================================
+    // public function getPresignedUrl(Request $request)
+    // {
+    //     $request->validate([
+    //         'extension' => 'required|string',
+    //         'content_type' => 'required|string'
+    //     ]);
+
+    //     $filename = 'products/' . Str::random(40) . '.' . $request->extension;
+
+    //     // temporaryUploadUrl mengembalikan ARRAY ['url' => '...', 'headers' => [...]]
+    //     $uploadResponse = Storage::disk('s3')->temporaryUploadUrl(
+    //         $filename,
+    //         now()->addMinutes(15),
+    //         ['ContentType' => $request->content_type]
+    //     );
+
+    //     $fileUrl = env('AWS_URL') . '/' . $filename;
+
+    //     return response()->json([
+    //         'upload_url' => $uploadResponse['url'],          // Ambil URL-nya saja
+    //         'upload_headers' => $uploadResponse['headers'],  // Ambil Header wajib S3-nya
+    //         'file_url' => $fileUrl
+    //     ]);
+    // }
+
     public function getPresignedUrl(Request $request)
     {
         $request->validate([
@@ -544,18 +569,20 @@ class ProductController extends Controller
 
         $filename = 'products/' . Str::random(40) . '.' . $request->extension;
 
-        // temporaryUploadUrl mengembalikan ARRAY ['url' => '...', 'headers' => [...]]
         $uploadResponse = Storage::disk('s3')->temporaryUploadUrl(
             $filename,
             now()->addMinutes(15),
-            ['ContentType' => $request->content_type]
+            [
+                'ContentType' => $request->content_type,
+                'ACL' => 'public-read' // <-- TAMBAHKAN BARIS INI KAWAN!
+            ]
         );
 
         $fileUrl = env('AWS_URL') . '/' . $filename;
 
         return response()->json([
-            'upload_url' => $uploadResponse['url'],          // Ambil URL-nya saja
-            'upload_headers' => $uploadResponse['headers'],  // Ambil Header wajib S3-nya
+            'upload_url' => $uploadResponse['url'],
+            'upload_headers' => $uploadResponse['headers'],
             'file_url' => $fileUrl
         ]);
     }
