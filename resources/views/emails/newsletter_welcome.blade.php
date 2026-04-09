@@ -50,7 +50,7 @@
                                         <table border="0" cellpadding="0" cellspacing="0">
                                             <tr>
                                                 <td align="center" bgcolor="#D4FF32" style="border-radius: 50px;">
-                                                    <a href="{{ env('APP_FRONTEND_URL', 'https://gycora.netlify.app') }}" target="_blank" style="font-size: 14px; font-weight: bold; color: #111827; text-decoration: none; padding: 14px 32px; border-radius: 50px; border: 1px solid #D4FF32; display: inline-block; text-transform: uppercase; letter-spacing: 1px;">
+                                                    <a href="{{ env('APP_FRONTEND_URL', 'https://gycoraessence.netlify.app') }}" target="_blank" style="font-size: 14px; font-weight: bold; color: #111827; text-decoration: none; padding: 14px 32px; border-radius: 50px; border: 1px solid #D4FF32; display: inline-block; text-transform: uppercase; letter-spacing: 1px;">
                                                         Jelajahi Gycora
                                                     </a>
                                                 </td>
