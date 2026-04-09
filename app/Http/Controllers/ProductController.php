@@ -485,6 +485,249 @@
 //     }
 // }
 
+// namespace App\Http\Controllers;
+
+// use App\Models\Product;
+// use App\Models\ProductStock;
+// use Illuminate\Http\Request;
+// use Illuminate\Support\Facades\DB;
+// use Illuminate\Support\Facades\Storage;
+// use Illuminate\Support\Facades\Validator;
+// use Illuminate\Support\Facades\Cache;
+// use Illuminate\Support\Str;
+
+// class ProductController extends Controller
+// {
+//     public function index()
+//     {
+//         try {
+//             $products = Product::with('category')->latest()->get();
+//             return response()->json($products, 200);
+//         } catch (\Exception $e) {
+//             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+//         }
+//     }
+
+//     public function inactiveProducts()
+//     {
+//         // [PERBAIKAN] Menghapus ->tags(['catalog'])
+//         $products = Cache::remember('products.inactive', 86400, function () {
+//             return Product::with('category')->latest()->get();
+//         });
+//         return response()->json($products, 200);
+//     }
+
+//     public function show($id)
+//     {
+//         try {
+//             $product = Product::with(['category', 'stocks' => function ($q) {
+//                 $q->orderBy('created_at', 'asc');
+//             }])->findOrFail($id);
+
+//             return response()->json(['status' => 'success', 'data' => $product], 200);
+//         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+//             return response()->json(['status' => 'error', 'message' => 'Produk tidak ditemukan.'], 404);
+//         } catch (\Exception $e) {
+//             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+//         }
+//     }
+
+//     // =================================================================================
+//     // FUNGSI GENERATE PRE-SIGNED URL UNTUK DIRECT UPLOAD DARI REACT KE S3
+//     // =================================================================================
+//     // public function getPresignedUrl(Request $request)
+//     // {
+//     //     $request->validate([
+//     //         'extension' => 'required|string',
+//     //         'content_type' => 'required|string'
+//     //     ]);
+
+//     //     $filename = 'products/' . Str::random(40) . '.' . $request->extension;
+
+//     //     // temporaryUploadUrl mengembalikan ARRAY ['url' => '...', 'headers' => [...]]
+//     //     $uploadResponse = Storage::disk('s3')->temporaryUploadUrl(
+//     //         $filename,
+//     //         now()->addMinutes(15),
+//     //         ['ContentType' => $request->content_type]
+//     //     );
+
+//     //     $fileUrl = env('AWS_URL') . '/' . $filename;
+
+//     //     return response()->json([
+//     //         'upload_url' => $uploadResponse['url'],          // Ambil URL-nya saja
+//     //         'upload_headers' => $uploadResponse['headers'],  // Ambil Header wajib S3-nya
+//     //         'file_url' => $fileUrl
+//     //     ]);
+//     // }
+
+//     public function getPresignedUrl(Request $request)
+//     {
+//         $request->validate([
+//             'extension' => 'required|string',
+//             'content_type' => 'required|string'
+//         ]);
+
+//         $filename = 'products/' . Str::random(40) . '.' . $request->extension;
+
+//         $uploadResponse = Storage::disk('s3')->temporaryUploadUrl(
+//             $filename,
+//             now()->addMinutes(15),
+//             [
+//                 'ContentType' => $request->content_type,
+//                 'ACL' => 'public-read' // <-- TAMBAHKAN BARIS INI KAWAN!
+//             ]
+//         );
+
+//         $fileUrl = env('AWS_URL') . '/' . $filename;
+
+//         return response()->json([
+//             'upload_url' => $uploadResponse['url'],
+//             'upload_headers' => $uploadResponse['headers'],
+//             'file_url' => $fileUrl
+//         ]);
+//     }
+
+//     public function store(Request $request)
+//     {
+//         $validator = Validator::make($request->all(), [
+//             'category_id' => 'required|exists:categories,id',
+//             'sku' => 'required|unique:products',
+//             'name' => 'required|string|max:255',
+//             'description' => 'nullable|string',
+//             'benefits' => 'nullable|string',
+//             'price' => 'required|numeric|min:0',
+//             'stock' => 'required|integer|min:0',
+//             'image_url' => 'nullable|string',
+//         ]);
+
+//         if ($validator->fails()) {
+//             return response()->json($validator->errors(), 422);
+//         }
+
+//         DB::beginTransaction();
+//         try {
+//             $data = $request->all();
+
+//             if (empty($data['slug'])) {
+//                 $data['slug'] = Str::slug($data['name']) . '-' . Str::random(5);
+//             }
+
+//             $product = Product::create($data);
+
+//             if ($request->stock > 0) {
+//                 $batchCode = 'STK-'.now()->format('YmdHis').'-'.strtoupper(Str::random(4));
+//                 ProductStock::create([
+//                     'product_id' => $product->id,
+//                     'batch_code' => $batchCode,
+//                     'quantity' => $request->stock,
+//                     'initial_quantity' => $request->stock,
+//                 ]);
+//             }
+
+//             DB::commit();
+
+//             // [PERBAIKAN] Gunakan Cache::forget biasa karena driver 'database' tidak mendukung tags
+//             Cache::forget('products.active');
+//             Cache::forget('products.inactive');
+
+//             return response()->json($product, 201);
+//         } catch (\Exception $e) {
+//             DB::rollBack();
+//             return response()->json(['message' => $e->getMessage()], 500);
+//         }
+//     }
+
+//     public function update(Request $request, $id)
+//     {
+//         $product = Product::findOrFail($id);
+
+//         $validator = Validator::make($request->all(), [
+//             'category_id' => 'required|exists:categories,id',
+//             'sku' => "required|unique:products,sku,$id",
+//             'name' => 'required|string|max:255',
+//             'description' => 'nullable|string',
+//             'benefits' => 'nullable|string',
+//             'price' => 'required|numeric|min:0',
+//             'image_url' => 'nullable|string',
+//         ]);
+
+//         if ($validator->fails()) {
+//             return response()->json($validator->errors(), 422);
+//         }
+
+//         $data = $request->except(['stock', '_method']);
+
+//         if ($request->has('name') && $request->name !== $product->name) {
+//             $data['slug'] = Str::slug($data['name']) . '-' . Str::random(5);
+//         }
+
+//         if ($request->has('image_url') && $request->image_url !== $product->image_url && $product->image_url) {
+//             $oldKey = str_replace(env('AWS_URL') . '/', '', $product->image_url);
+//             Storage::disk('s3')->delete($oldKey);
+//         }
+
+//         $product->update($data);
+
+//         // [PERBAIKAN] Bersihkan Cache
+//         Cache::forget('products.active');
+//         Cache::forget('products.inactive');
+
+//         return response()->json($product, 200);
+//     }
+
+//     public function destroy($id)
+//     {
+//         $product = Product::findOrFail($id);
+
+//         if ($product->image_url) {
+//             $oldKey = str_replace(env('AWS_URL') . '/', '', $product->image_url);
+//             Storage::disk('s3')->delete($oldKey);
+//         }
+
+//         $product->delete();
+
+//         // [PERBAIKAN] Bersihkan Cache
+//         Cache::forget('products.active');
+//         Cache::forget('products.inactive');
+
+//         return response()->json(['message' => 'Product deleted'], 200);
+//     }
+
+//     public function restore($id)
+//     {
+//         $product = Product::withTrashed()->findOrFail($id);
+//         $product->restore();
+
+//         // [PERBAIKAN] Bersihkan Cache
+//         Cache::forget('products.active');
+//         Cache::forget('products.inactive');
+
+//         return response()->json(['message' => 'Product activated/restored'], 200);
+//     }
+
+//     public function forceDelete($id)
+//     {
+//         $product = Product::withTrashed()->findOrFail($id);
+
+//         if ($product->image_url) {
+//             $oldKey = str_replace(env('AWS_URL') . '/', '', $product->image_url);
+//             Storage::disk('s3')->delete($oldKey);
+//         }
+
+//         try {
+//             $product->forceDelete();
+
+//             // [PERBAIKAN] Bersihkan Cache
+//             Cache::forget('products.active');
+//             Cache::forget('products.inactive');
+
+//             return response()->json(['message' => 'Product deleted permanently'], 200);
+//         } catch (\Illuminate\Database\QueryException $e) {
+//             return response()->json(['message' => 'Produk tidak bisa dihapus karena sudah memiliki riwayat transaksi'], 422);
+//         }
+//     }
+// }
+
 namespace App\Http\Controllers;
 
 use App\Models\Product;
@@ -501,7 +744,8 @@ class ProductController extends Controller
     public function index()
     {
         try {
-            $products = Product::with('category')->latest()->get();
+            // HANYA AMBIL YANG ACTIVE
+            $products = Product::with('category')->where('status', 'active')->latest()->get();
             return response()->json($products, 200);
         } catch (\Exception $e) {
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
@@ -510,10 +754,8 @@ class ProductController extends Controller
 
     public function inactiveProducts()
     {
-        // [PERBAIKAN] Menghapus ->tags(['catalog'])
-        $products = Cache::remember('products.inactive', 86400, function () {
-            return Product::with('category')->latest()->get();
-        });
+        // HANYA AMBIL YANG INACTIVE
+        $products = Product::with('category')->where('status', 'inactive')->latest()->get();
         return response()->json($products, 200);
     }
 
@@ -532,34 +774,6 @@ class ProductController extends Controller
         }
     }
 
-    // =================================================================================
-    // FUNGSI GENERATE PRE-SIGNED URL UNTUK DIRECT UPLOAD DARI REACT KE S3
-    // =================================================================================
-    // public function getPresignedUrl(Request $request)
-    // {
-    //     $request->validate([
-    //         'extension' => 'required|string',
-    //         'content_type' => 'required|string'
-    //     ]);
-
-    //     $filename = 'products/' . Str::random(40) . '.' . $request->extension;
-
-    //     // temporaryUploadUrl mengembalikan ARRAY ['url' => '...', 'headers' => [...]]
-    //     $uploadResponse = Storage::disk('s3')->temporaryUploadUrl(
-    //         $filename,
-    //         now()->addMinutes(15),
-    //         ['ContentType' => $request->content_type]
-    //     );
-
-    //     $fileUrl = env('AWS_URL') . '/' . $filename;
-
-    //     return response()->json([
-    //         'upload_url' => $uploadResponse['url'],          // Ambil URL-nya saja
-    //         'upload_headers' => $uploadResponse['headers'],  // Ambil Header wajib S3-nya
-    //         'file_url' => $fileUrl
-    //     ]);
-    // }
-
     public function getPresignedUrl(Request $request)
     {
         $request->validate([
@@ -574,7 +788,7 @@ class ProductController extends Controller
             now()->addMinutes(15),
             [
                 'ContentType' => $request->content_type,
-                'ACL' => 'public-read' // <-- TAMBAHKAN BARIS INI KAWAN!
+                'ACL' => 'public-read'
             ]
         );
 
@@ -598,6 +812,9 @@ class ProductController extends Controller
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'image_url' => 'nullable|string',
+            'variant_video' => 'nullable|string',
+            'color' => 'nullable|array',
+            'status' => 'required|in:active,inactive',
         ]);
 
         if ($validator->fails()) {
@@ -625,11 +842,6 @@ class ProductController extends Controller
             }
 
             DB::commit();
-
-            // [PERBAIKAN] Gunakan Cache::forget biasa karena driver 'database' tidak mendukung tags
-            Cache::forget('products.active');
-            Cache::forget('products.inactive');
-
             return response()->json($product, 201);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -649,6 +861,9 @@ class ProductController extends Controller
             'benefits' => 'nullable|string',
             'price' => 'required|numeric|min:0',
             'image_url' => 'nullable|string',
+            'variant_video' => 'nullable|string',
+            'color' => 'nullable|array',
+            'status' => 'required|in:active,inactive',
         ]);
 
         if ($validator->fails()) {
@@ -667,15 +882,30 @@ class ProductController extends Controller
         }
 
         $product->update($data);
-
-        // [PERBAIKAN] Bersihkan Cache
-        Cache::forget('products.active');
-        Cache::forget('products.inactive');
-
         return response()->json($product, 200);
     }
 
     public function destroy($id)
+    {
+        $product = Product::findOrFail($id);
+
+        // UBAH STATUS JADI INACTIVE (NONAKTIFKAN)
+        $product->update(['status' => 'inactive']);
+
+        return response()->json(['message' => 'Product deactivated'], 200);
+    }
+
+    public function restore($id)
+    {
+        $product = Product::findOrFail($id);
+
+        // KEMBALIKAN KE ACTIVE
+        $product->update(['status' => 'active']);
+
+        return response()->json(['message' => 'Product activated'], 200);
+    }
+
+    public function forceDelete($id)
     {
         $product = Product::findOrFail($id);
 
@@ -684,43 +914,8 @@ class ProductController extends Controller
             Storage::disk('s3')->delete($oldKey);
         }
 
-        $product->delete();
-
-        // [PERBAIKAN] Bersihkan Cache
-        Cache::forget('products.active');
-        Cache::forget('products.inactive');
-
-        return response()->json(['message' => 'Product deleted'], 200);
-    }
-
-    public function restore($id)
-    {
-        $product = Product::withTrashed()->findOrFail($id);
-        $product->restore();
-
-        // [PERBAIKAN] Bersihkan Cache
-        Cache::forget('products.active');
-        Cache::forget('products.inactive');
-
-        return response()->json(['message' => 'Product activated/restored'], 200);
-    }
-
-    public function forceDelete($id)
-    {
-        $product = Product::withTrashed()->findOrFail($id);
-
-        if ($product->image_url) {
-            $oldKey = str_replace(env('AWS_URL') . '/', '', $product->image_url);
-            Storage::disk('s3')->delete($oldKey);
-        }
-
         try {
-            $product->forceDelete();
-
-            // [PERBAIKAN] Bersihkan Cache
-            Cache::forget('products.active');
-            Cache::forget('products.inactive');
-
+            $product->delete(); // Hapus permanen
             return response()->json(['message' => 'Product deleted permanently'], 200);
         } catch (\Illuminate\Database\QueryException $e) {
             return response()->json(['message' => 'Produk tidak bisa dihapus karena sudah memiliki riwayat transaksi'], 422);

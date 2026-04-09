@@ -17,11 +17,17 @@ class Product extends Model
         'price',
         'stock',
         'image_url',
+        'variant_images',
+        'variant_video',
+        'color',
+        'status'
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'stock' => 'integer',
+        'variant_images' => 'array', // <-- CASTING KE ARRAY/JSON
+        'color' => 'array',          // <-- CASTING KE ARRAY/JSON
     ];
 
     /**
