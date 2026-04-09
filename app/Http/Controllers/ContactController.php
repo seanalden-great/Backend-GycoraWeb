@@ -39,4 +39,49 @@ class ContactController extends Controller
             'message' => 'Pesan Anda berhasil dikirim. Tim kami akan segera merespons.',
         ], 201);
     }
+
+    public function subscribe(\Illuminate\Http\Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email:rfc,dns'
+        ], [
+            'email.dns' => 'The email domain does not seem to be valid or active.'
+        ]);
+
+        $email = $request->email;
+
+        // Cek apakah ini email dari user yang sudah terdaftar di web kita
+        $user = \App\Models\User::where('email', $email)->first();
+        $isRegistered = $user ? true : false;
+
+        $subscriber = \App\Models\Subscriber::where('email', $email)->first();
+
+        if ($subscriber) {
+            if (!$subscriber->is_active) {
+                $subscriber->update(['is_active' => true, 'is_registered' => $isRegistered]);
+            } else {
+                return response()->json(['message' => 'You are already subscribed!'], 400);
+            }
+        } else {
+            \App\Models\Subscriber::create([
+                'email' => $email,
+                'is_registered' => $isRegistered,
+                'is_active' => true
+            ]);
+        }
+
+        // Jika dia user terdaftar, update status di tabel users juga
+        if ($user) {
+            $user->update(['is_subscribed' => true]);
+        }
+
+        // Kirim Email Welcome
+        try {
+            \Illuminate\Support\Facades\Mail::to($email)->send(new \App\Mail\WelcomeSubscriberMail($email));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Subscribe Mail Error: ' . $e->getMessage());
+        }
+
+        return response()->json(['message' => 'Subscription successful! Welcome to our newsletter.']);
+    }
 }

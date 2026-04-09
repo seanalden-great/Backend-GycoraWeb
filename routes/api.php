@@ -22,6 +22,8 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/admin/login', [AuthController::class, 'adminLogin']);
 
+Route::post('/subscribe', [\App\Http\Controllers\ContactController::class, 'subscribe']);
+
 Route::get('/categories', [CategoryController::class, 'index']);
 
 // =========================================================================
