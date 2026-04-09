@@ -29,48 +29,99 @@ class CartController extends Controller
     // =========================================================================
     // 2. POST: Tambah ke Keranjang
     // =========================================================================
+    // public function store(Request $request)
+    // {
+    //     $validated = $request->validate([
+    //         'product_id' => 'required|exists:products,id',
+    //         'quantity'   => 'required|integer|min:1',
+    //     ]);
+
+    //     $user = $request->user();
+
+    //     // Ambil data produk untuk validasi stok dan perhitungan harga
+    //     $product = Product::findOrFail($validated['product_id']);
+
+    //     // Cek apakah produk ini sudah ada di keranjang user
+    //     $existingCart = $user->carts()->where('product_id', $product->id)->first();
+
+    //     // Hitung kuantitas baru
+    //     $newQuantity = $validated['quantity'];
+    //     if ($existingCart) {
+    //         $newQuantity += $existingCart->quantity;
+    //     }
+
+    //     // Validasi Stok
+    //     if ($newQuantity > $product->stock) {
+    //         return response()->json([
+    //             'message' => 'Quantity exceeds available stock!'
+    //         ], 422); // 422 Unprocessable Entity
+    //     }
+
+    //     // Hitung Gross Amount dari database (BUKAN dari input frontend)
+    //     $grossAmount = $newQuantity * $product->price;
+
+    //     DB::transaction(function () use ($existingCart, $user, $product, $newQuantity, $grossAmount) {
+    //         if ($existingCart) {
+    //             // Update keranjang lama
+    //             $existingCart->update([
+    //                 'quantity'     => $newQuantity,
+    //                 'gross_amount' => $grossAmount,
+    //             ]);
+    //         } else {
+    //             // Insert keranjang baru
+    //             $user->carts()->create([
+    //                 'product_id'   => $product->id,
+    //                 'quantity'     => $newQuantity,
+    //                 'gross_amount' => $grossAmount,
+    //             ]);
+    //         }
+    //     });
+
+    //     return response()->json([
+    //         'message' => 'Added to cart successfully',
+    //         // Kita bisa mengambil ID keranjang terbaru
+    //         'cart_id' => $existingCart ? $existingCart->id : $user->carts()->latest('id')->first()->id,
+    //     ], 200); // Sesuai dengan golang yang mengirim w.WriteHeader(http.StatusOK)
+    // }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
             'product_id' => 'required|exists:products,id',
             'quantity'   => 'required|integer|min:1',
+            'color'      => 'nullable|string|max:50', // <-- Validasi warna
         ]);
 
         $user = $request->user();
-
-        // Ambil data produk untuk validasi stok dan perhitungan harga
         $product = Product::findOrFail($validated['product_id']);
 
-        // Cek apakah produk ini sudah ada di keranjang user
-        $existingCart = $user->carts()->where('product_id', $product->id)->first();
+        // Cek apakah produk DENGAN WARNA YANG SAMA sudah ada di keranjang
+        $existingCart = $user->carts()
+            ->where('product_id', $product->id)
+            ->where('color', $request->color) // <-- Pencarian spesifik varian
+            ->first();
 
-        // Hitung kuantitas baru
         $newQuantity = $validated['quantity'];
         if ($existingCart) {
             $newQuantity += $existingCart->quantity;
         }
 
-        // Validasi Stok
         if ($newQuantity > $product->stock) {
-            return response()->json([
-                'message' => 'Quantity exceeds available stock!'
-            ], 422); // 422 Unprocessable Entity
+            return response()->json(['message' => 'Quantity exceeds available stock!'], 422);
         }
 
-        // Hitung Gross Amount dari database (BUKAN dari input frontend)
         $grossAmount = $newQuantity * $product->price;
 
-        DB::transaction(function () use ($existingCart, $user, $product, $newQuantity, $grossAmount) {
+        DB::transaction(function () use ($existingCart, $user, $product, $newQuantity, $grossAmount, $request) {
             if ($existingCart) {
-                // Update keranjang lama
                 $existingCart->update([
                     'quantity'     => $newQuantity,
                     'gross_amount' => $grossAmount,
                 ]);
             } else {
-                // Insert keranjang baru
                 $user->carts()->create([
                     'product_id'   => $product->id,
+                    'color'        => $request->color, // <-- Simpan warna
                     'quantity'     => $newQuantity,
                     'gross_amount' => $grossAmount,
                 ]);
@@ -79,9 +130,8 @@ class CartController extends Controller
 
         return response()->json([
             'message' => 'Added to cart successfully',
-            // Kita bisa mengambil ID keranjang terbaru
             'cart_id' => $existingCart ? $existingCart->id : $user->carts()->latest('id')->first()->id,
-        ], 200); // Sesuai dengan golang yang mengirim w.WriteHeader(http.StatusOK)
+        ], 200);
     }
 
     // =========================================================================
