@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -188,29 +189,58 @@ class AuthController extends Controller
         ]);
     }
 
-    public function updateAdminImage(Request $request)
+    // 1. FUNGSI BARU UNTUK S3 PRE-SIGNED URL PROFIL
+    public function getProfilePresignedUrl(Request $request)
     {
         $request->validate([
-            'image' => 'required|image|mimes:jpeg,png,jpg',
+            'extension' => 'required|string',
+            'content_type' => 'required|string',
+        ]);
+
+        $filename = 'profiles/'.Str::random(40).'.'.$request->extension;
+
+        $uploadResponse = Storage::disk('s3')->temporaryUploadUrl(
+            $filename,
+            now()->addMinutes(15),
+            [
+                'ContentType' => $request->content_type,
+                'ACL' => 'public-read', // Penting agar foto profil bisa diakses publik
+            ]
+        );
+
+        $fileUrl = env('AWS_URL').'/'.$filename;
+
+        return response()->json([
+            'upload_url' => $uploadResponse['url'],
+            'upload_headers' => $uploadResponse['headers'],
+            'file_url' => $fileUrl,
+        ]);
+    }
+
+    // 2. UBAH FUNGSI UPDATE GAMBAR
+    public function updateAdminImage(Request $request)
+    {
+        // Sekarang kita hanya menerima string URL, BUKAN file mentah
+        $request->validate([
+            'image_url' => 'required|url',
         ]);
 
         $admin = $request->user();
 
         try {
-            // [PERBAIKAN] Jika ada foto lama, hapus dari Local Storage
+            // Jika ada foto lama di S3, hapus dulu agar tidak menumpuk
             if ($admin->profile_image) {
-                // Bersihkan URL agar hanya menyisakan path relatifnya saja
-                $oldPath = str_replace(url(Storage::url('')), '', $admin->profile_image);
-                $oldPath = ltrim(str_replace('/storage/', '', $oldPath), '/');
+                // Ekstrak path setelah domain AWS
+                $oldKey = str_replace(env('AWS_URL').'/', '', $admin->profile_image);
 
-                Storage::disk('public')->delete($oldPath);
+                // Pastikan key-nya benar-benar ada dan tidak kosong
+                if ($oldKey && $oldKey !== $admin->profile_image) {
+                    Storage::disk('s3')->delete($oldKey);
+                }
             }
 
-            // [PERBAIKAN] Upload foto baru ke Local Storage
-            $path = $request->file('image')->store('profiles', 'public');
-
-            // [PERBAIKAN] Simpan URL penuhnya ke database
-            $admin->profile_image = url(Storage::url($path));
+            // Simpan URL penuh S3 ke database
+            $admin->profile_image = $request->image_url;
             $admin->save();
 
             return response()->json([
@@ -219,7 +249,7 @@ class AuthController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to update admin photo',
+                'message' => 'Failed to update admin photo: '.$e->getMessage(),
             ], 500);
         }
     }
