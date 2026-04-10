@@ -23,6 +23,8 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/admin/login', [AuthController::class, 'adminLogin']);
 
+// POST /api/contact
+Route::post('/contact', [ContactController::class, 'store']);
 Route::post('/subscribe', [ContactController::class, 'subscribe']);
 
 Route::get('/categories', [CategoryController::class, 'index']);
@@ -53,6 +55,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/presigned-url', [AuthController::class, 'getProfilePresignedUrl']);
     Route::post('/admin/update-image', [AuthController::class, 'updateAdminImage']);
     Route::post('/admin/update-password', [AuthController::class, 'updateAdminPassword']);
+
+    Route::get('/admin/messages', [ContactController::class, 'getInboundMessages']);
+    Route::get('/admin/messages/{id}', [ContactController::class, 'showAdminMessage']);
+    Route::post('/admin/messages/{id}/respond', [ContactController::class, 'respondMessage']);
+    Route::get('/user/contact-history', [ContactController::class, 'userHistory']);
 
     // Addresses
     // Anda bisa mendefinisikannya satu-satu untuk mencerminkan Golang Mux:
@@ -87,9 +94,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/admin/product-stocks', [ProductStockController::class, 'index']);
     Route::post('/admin/product-stocks/{productId}', [ProductStockController::class, 'store']);
-
-    // POST /api/contact
-    Route::post('/contact', [ContactController::class, 'submit']);
 
     // =========================================================================
     // RUTE KERANJANG (CART)
