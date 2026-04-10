@@ -11,7 +11,7 @@ use App\Http\Controllers\ProductStockController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\WishlistController;
 use App\Models\Subscriber;
-use Illuminate\Support\Facades\Request;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 // --- RUTE PUBLIK (Tanpa Token) ---
