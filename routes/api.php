@@ -11,6 +11,7 @@ use App\Http\Controllers\ProductStockController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\WishlistController;
 use App\Models\Subscriber;
+use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Route;
 
 // --- RUTE PUBLIK (Tanpa Token) ---
@@ -49,6 +50,10 @@ Route::post('/payments/callback', [PaymentController::class, 'callback']);
 
 // --- PROTECTED ROUTES (Butuh Token Sanctum) ---
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
+
     // Profil & Users
     Route::get('/admin/users', [AuthController::class, 'getAllUsers']); // Idealnya dibungkus middleware admin lagi
     Route::put('/profile', [AuthController::class, 'updateProfile']);
