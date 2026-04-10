@@ -118,4 +118,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/payments/invoice', [PaymentController::class, 'createInvoice']);
     Route::post('/shipping/rates', [PaymentController::class, 'getShippingRates']);
+
+    Route::get('/admin/subscribers', function () {
+        return response()->json(\App\Models\Subscriber::latest()->get());
+    });
 });
