@@ -9,6 +9,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductStockController;
 use App\Http\Controllers\TransactionController;
+use App\Models\Subscriber;
 use Illuminate\Support\Facades\Route;
 
 // --- RUTE PUBLIK (Tanpa Token) ---
@@ -16,13 +17,13 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
 // Admin Login diletakkan terpisah
-Route::post('/admin/login', [AuthController::class, 'adminLogin']);
+// Route::post('/admin/login', [AuthController::class, 'adminLogin']);
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/admin/login', [AuthController::class, 'adminLogin']);
 
-Route::post('/subscribe', [\App\Http\Controllers\ContactController::class, 'subscribe']);
+Route::post('/subscribe', [ContactController::class, 'subscribe']);
 
 Route::get('/categories', [CategoryController::class, 'index']);
 
@@ -46,8 +47,11 @@ Route::post('/payments/callback', [PaymentController::class, 'callback']);
 // --- PROTECTED ROUTES (Butuh Token Sanctum) ---
 Route::middleware('auth:sanctum')->group(function () {
     // Profil & Users
-    Route::put('/profile', [AuthController::class, 'updateProfile']);
     Route::get('/admin/users', [AuthController::class, 'getAllUsers']); // Idealnya dibungkus middleware admin lagi
+    Route::put('/profile', [AuthController::class, 'updateProfile']);
+    Route::post('/admin/update-info', [AuthController::class, 'updateAdminProfileInfo']);
+    Route::post('/admin/update-image', [AuthController::class, 'updateAdminImage']);
+    Route::post('/admin/update-password', [AuthController::class, 'updateAdminPassword']);
 
     // Addresses
     // Anda bisa mendefinisikannya satu-satu untuk mencerminkan Golang Mux:
@@ -64,11 +68,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/categories/{id}', [CategoryController::class, 'update']);
     Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
 
-    // Profil Pengguna (User biasa)
-    Route::put('/profile', [AuthController::class, 'updateProfile']);
+    // // Profil Pengguna (User biasa)
+    // Route::put('/profile', [AuthController::class, 'updateProfile']);
 
-    // Rute Khusus Admin (Dalam praktiknya, Anda mungkin ingin menambahkan middleware role khusus untuk ini)
-    Route::get('/admin/users', [AuthController::class, 'getAllUsers']);
+    // // Rute Khusus Admin (Dalam praktiknya, Anda mungkin ingin menambahkan middleware role khusus untuk ini)
+    // Route::get('/admin/users', [AuthController::class, 'getAllUsers']);
 
     // Route::post('/products', [ProductController::class, 'store']);
     // Route::put('/products/{id}', [ProductController::class, 'update']);
@@ -120,6 +124,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/shipping/rates', [PaymentController::class, 'getShippingRates']);
 
     Route::get('/admin/subscribers', function () {
-        return response()->json(\App\Models\Subscriber::latest()->get());
+        return response()->json(Subscriber::latest()->get());
     });
 });
