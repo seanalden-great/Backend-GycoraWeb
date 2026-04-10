@@ -9,6 +9,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductStockController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\WishlistController;
 use App\Models\Subscriber;
 use Illuminate\Support\Facades\Route;
 
@@ -127,6 +128,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/payments/invoice', [PaymentController::class, 'createInvoice']);
     Route::post('/shipping/rates', [PaymentController::class, 'getShippingRates']);
+
+    Route::get('/wishlists', [WishlistController::class, 'index']);
+
+    Route::post('/wishlists/toggle', [WishlistController::class, 'toggle']);
 
     Route::get('/admin/subscribers', function () {
         return response()->json(Subscriber::latest()->get());
