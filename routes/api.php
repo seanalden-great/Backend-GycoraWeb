@@ -7,6 +7,7 @@ use App\Http\Controllers\CategoryCoaController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CoaController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductStockController;
