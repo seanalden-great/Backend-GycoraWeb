@@ -3,7 +3,9 @@
 use App\Http\Controllers\AddressController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\CategoryCoaController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CoaController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
@@ -143,9 +145,9 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // Modul Accounting Khusus
-    Route::apiResource('category-coas', CategoryCoaController::class);
-    Route::apiResource('coas', CoaController::class);
-    Route::post('coas/{id}/post', [CoaController::class, 'postCoa']);
+    Route::apiResource('/admin/category-coas', CategoryCoaController::class);
+    Route::apiResource('/admin/coas', CoaController::class);
+    Route::post('/admin/coas/{id}/post', [CoaController::class, 'postCoa']);
     Route::apiResource('payments', TransferReceivePaymentController::class);
 
     Route::apiResource('suppliers', InvoiceController::class)->except(['create', 'edit', 'show']);
