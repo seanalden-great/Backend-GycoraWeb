@@ -141,4 +141,21 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/admin/subscribers', function () {
         return response()->json(Subscriber::latest()->get());
     });
+
+    // Modul Accounting Khusus
+    Route::apiResource('category-coas', CategoryCoaController::class);
+    Route::apiResource('coas', CoaController::class);
+    Route::post('coas/{id}/post', [CoaController::class, 'postCoa']);
+    Route::apiResource('payments', TransferReceivePaymentController::class);
+
+    Route::apiResource('suppliers', InvoiceController::class)->except(['create', 'edit', 'show']);
+    Route::get('suppliers', [InvoiceController::class, 'indexSupplier']);
+    Route::post('suppliers', [InvoiceController::class, 'storeSupplier']);
+    Route::put('suppliers/{id}', [InvoiceController::class, 'updateSupplier']);
+    Route::delete('suppliers/{id}', [InvoiceController::class, 'deleteSupplier']);
+    Route::get('invoices', [InvoiceController::class, 'indexInvoice']);
+    Route::post('invoices', [InvoiceController::class, 'storeInvoice']);
+    Route::put('invoices/{id}', [InvoiceController::class, 'updateInvoice']);
+    Route::post('invoices/{id}/pay', [InvoiceController::class, 'processPayment']);
+    Route::delete('invoices/{id}', [InvoiceController::class, 'deleteInvoice']);
 });
