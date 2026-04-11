@@ -11,6 +11,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductStockController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\TransferReceivePaymentController;
 use App\Http\Controllers\WishlistController;
 use App\Models\Subscriber;
 use Illuminate\Http\Request;
@@ -148,7 +149,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('/admin/category-coas', CategoryCoaController::class);
     Route::apiResource('/admin/coas', CoaController::class);
     Route::post('/admin/coas/{id}/post', [CoaController::class, 'postCoa']);
-    Route::apiResource('payments', TransferReceivePaymentController::class);
+    Route::apiResource('/admin/payments', TransferReceivePaymentController::class);
 
     Route::apiResource('suppliers', InvoiceController::class)->except(['create', 'edit', 'show']);
     Route::get('suppliers', [InvoiceController::class, 'indexSupplier']);
