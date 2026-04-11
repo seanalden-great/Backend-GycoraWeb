@@ -152,14 +152,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/coas/{id}/post', [CoaController::class, 'postCoa']);
     Route::apiResource('/admin/payments', TransferReceivePaymentController::class);
 
-    Route::apiResource('suppliers', InvoiceController::class)->except(['create', 'edit', 'show']);
-    Route::get('suppliers', [InvoiceController::class, 'indexSupplier']);
-    Route::post('suppliers', [InvoiceController::class, 'storeSupplier']);
-    Route::put('suppliers/{id}', [InvoiceController::class, 'updateSupplier']);
-    Route::delete('suppliers/{id}', [InvoiceController::class, 'deleteSupplier']);
-    Route::get('invoices', [InvoiceController::class, 'indexInvoice']);
-    Route::post('invoices', [InvoiceController::class, 'storeInvoice']);
-    Route::put('invoices/{id}', [InvoiceController::class, 'updateInvoice']);
-    Route::post('invoices/{id}/pay', [InvoiceController::class, 'processPayment']);
-    Route::delete('invoices/{id}', [InvoiceController::class, 'deleteInvoice']);
+    Route::apiResource('/admin/suppliers', InvoiceController::class)->except(['create', 'edit', 'show']);
+    Route::get('/admin/suppliers', [InvoiceController::class, 'indexSupplier']);
+    Route::post('/admin/suppliers', [InvoiceController::class, 'storeSupplier']);
+    Route::put('/admin/suppliers/{id}', [InvoiceController::class, 'updateSupplier']);
+    Route::delete('/admin/suppliers/{id}', [InvoiceController::class, 'deleteSupplier']);
+    Route::get('/admin/invoices', [InvoiceController::class, 'indexInvoice']);
+    Route::post('/admin/invoices', [InvoiceController::class, 'storeInvoice']);
+    Route::put('/admin/invoices/{id}', [InvoiceController::class, 'updateInvoice']);
+    Route::post('/admin/invoices/{id}/pay', [InvoiceController::class, 'processPayment']);
+    Route::delete('/admin/invoices/{id}', [InvoiceController::class, 'deleteInvoice']);
 });
