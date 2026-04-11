@@ -7,6 +7,7 @@ use App\Http\Controllers\CategoryCoaController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CoaController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
@@ -162,4 +163,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/admin/invoices/{id}', [InvoiceController::class, 'updateInvoice']);
     Route::post('/admin/invoices/{id}/pay', [InvoiceController::class, 'processPayment']);
     Route::delete('/admin/invoices/{id}', [InvoiceController::class, 'deleteInvoice']);
+
+    Route::middleware(['auth:sanctum'])->prefix('admin/dashboard')->group(function () {
+    Route::get('/master-data', [DashboardController::class, 'getDashboardMasterData']);
+    // Endpoint lama jika masih dipakai
+    Route::get('/stats', [DashboardController::class, 'getStats']);
+    Route::get('/revenue-chart', [DashboardController::class, 'getRevenueChart']);
+    Route::get('/popular-products', [DashboardController::class, 'getPopularProducts']);
+    Route::get('/predicted-bestsellers', [DashboardController::class, 'getPredictedBestsellers']);
+    Route::get('/recent-activities', [DashboardController::class, 'getRecentActivities']);
+    Route::get('/daily-average', [DashboardController::class, 'getAverageDailyRevenue']);
+});
 });
