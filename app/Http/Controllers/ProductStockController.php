@@ -108,16 +108,25 @@ class ProductStockController extends Controller
                 $product->increment('stock', $request->quantity);
             });
 
-            Cache::tags(['catalog'])->flush();
+            // Cache::tags(['catalog'])->flush();
+            Cache::flush(); // Akan menghapus semua cache
 
             return response()->json(['message' => 'New stock batch added successfully.']);
 
-        } catch (\Exception $e) {
-            // Pencatatan Error Sistem agar Admin Server bisa melakukan pelacakan (Debugging)
-            Log::error("Stock Addition Error (Product ID: {$productId}): " . $e->getMessage());
+        // } catch (\Exception $e) {
+        //     // Pencatatan Error Sistem agar Admin Server bisa melakukan pelacakan (Debugging)
+        //     Log::error("Stock Addition Error (Product ID: {$productId}): " . $e->getMessage());
 
+        //     return response()->json([
+        //         'message' => 'Failed to add stock batch due to system error.'
+        //     ], 500);
+        // }
+
+        } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to add stock batch due to system error.'
+                'message' => 'Failed to add stock batch due to system error.',
+                'error_detail' => $e->getMessage(), // <-- TAMBAHKAN INI
+                'line' => $e->getLine()             // <-- TAMBAHKAN INI
             ], 500);
         }
     }

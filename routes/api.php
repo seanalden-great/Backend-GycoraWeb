@@ -165,13 +165,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/admin/invoices/{id}', [InvoiceController::class, 'deleteInvoice']);
 
     Route::middleware(['auth:sanctum'])->prefix('admin/dashboard')->group(function () {
-    Route::get('/master-data', [DashboardController::class, 'getDashboardMasterData']);
-    // Endpoint lama jika masih dipakai
-    Route::get('/stats', [DashboardController::class, 'getStats']);
-    Route::get('/revenue-chart', [DashboardController::class, 'getRevenueChart']);
-    Route::get('/popular-products', [DashboardController::class, 'getPopularProducts']);
-    Route::get('/predicted-bestsellers', [DashboardController::class, 'getPredictedBestsellers']);
-    Route::get('/recent-activities', [DashboardController::class, 'getRecentActivities']);
-    Route::get('/daily-average', [DashboardController::class, 'getAverageDailyRevenue']);
-});
+        Route::get('/master-data', [DashboardController::class, 'getDashboardMasterData']);
+        // Endpoint lama jika masih dipakai
+        Route::get('/stats', [DashboardController::class, 'getStats']);
+        Route::get('/revenue-chart', [DashboardController::class, 'getRevenueChart']);
+        Route::get('/popular-products', [DashboardController::class, 'getPopularProducts']);
+        Route::get('/predicted-bestsellers', [DashboardController::class, 'getPredictedBestsellers']);
+        Route::get('/recent-activities', [DashboardController::class, 'getRecentActivities']);
+        Route::get('/daily-average', [DashboardController::class, 'getAverageDailyRevenue']);
+    });
 });
