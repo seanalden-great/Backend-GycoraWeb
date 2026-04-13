@@ -116,14 +116,43 @@ class PaymentController extends Controller
         $externalId = 'PAY-'.$transaction->order_id.($transaction->payment ? '-'.time() : '');
 
         $items = [];
+        // foreach ($transaction->details as $detail) {
+
+        // // Ambil nama produk dasar
+        //     $productName = $detail->product->name;
+
+        //     // Tambahkan embel-embel warna jika ada di dalam detail transaksi
+        //     if (!empty($detail->color)) {
+        //         $productName .= ' - ' . $detail->color;
+        //     }
+
+        //     $items[] = [
+        //         'name' => $productName,
+        //         'quantity' => $detail->quantity,
+        //         'price' => (int) $detail->price,
+        //         'category' => 'PHYSICAL_PRODUCT',
+        //     ];
+        // }
+
         foreach ($transaction->details as $detail) {
 
-        // Ambil nama produk dasar
+            // Ambil nama produk dasar
             $productName = $detail->product->name;
 
             // Tambahkan embel-embel warna jika ada di dalam detail transaksi
             if (!empty($detail->color)) {
-                $productName .= ' - ' . $detail->color;
+                // Coba terjemahkan string JSON menjadi array PHP
+                $colorDecoded = json_decode($detail->color, true);
+
+                // Cek apakah berhasil di-decode dan berupa array (berarti format baru)
+                if (json_last_error() === JSON_ERROR_NONE && is_array($colorDecoded)) {
+                    // Ambil 'name'. Jika kosong, gunakan 'hex'
+                    $colorLabel = !empty($colorDecoded['name']) ? $colorDecoded['name'] : $colorDecoded['hex'];
+                    $productName .= ' - ' . $colorLabel;
+                } else {
+                    // Fallback jika datanya format lama (hanya string Hex biasa)
+                    $productName .= ' - ' . $detail->color;
+                }
             }
 
             $items[] = [
