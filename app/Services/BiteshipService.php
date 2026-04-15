@@ -180,9 +180,9 @@ class BiteshipService
         }
 
         $payload = [
-            'origin_contact_name' => 'Solher Store',
-            'origin_contact_phone' => '08883888585',
-            'origin_address' => 'Jalan Kecilung N0. 8A, Kota Surabaya, Jawa Timur 60275, Indonesia',
+            'origin_contact_name' => 'Gycora Store',
+            'origin_contact_phone' => '089517999768',
+            'origin_address' => 'Jalan Wijaya Kusuma No.57, Kota Surabaya, Jawa Timur 60272, Indonesia',
             'origin_postal_code' => config('services.biteship.origin_postal_code'),
 
             'origin_coordinate' => [
