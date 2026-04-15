@@ -6,6 +6,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryCoaController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CoaController;
+use App\Http\Controllers\ConsultController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvoiceController;
@@ -56,6 +57,9 @@ Route::post('/biteship/callback', [TransactionController::class, 'biteshipCallba
 Route::post('/payments/callback', [PaymentController::class, 'callback']);
 
 Route::post('/promo/claim', [PromoController::class, 'claim']);
+
+// Rute Publik (Bisa diakses Guest / Tanpa Login)
+Route::get('/landing-page/consult', [ConsultController::class, 'getConsultPageData']);
 
 // --- PROTECTED ROUTES (Butuh Token Sanctum) ---
 Route::middleware('auth:sanctum')->group(function () {
@@ -172,14 +176,21 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/search', [SearchController::class, 'globalSearch']);
 
-    Route::middleware(['auth:sanctum'])->prefix('admin/dashboard')->group(function () {
-        Route::get('/master-data', [DashboardController::class, 'getDashboardMasterData']);
-        // Endpoint lama jika masih dipakai
-        Route::get('/stats', [DashboardController::class, 'getStats']);
-        Route::get('/revenue-chart', [DashboardController::class, 'getRevenueChart']);
-        Route::get('/popular-products', [DashboardController::class, 'getPopularProducts']);
-        Route::get('/predicted-bestsellers', [DashboardController::class, 'getPredictedBestsellers']);
-        Route::get('/recent-activities', [DashboardController::class, 'getRecentActivities']);
-        Route::get('/daily-average', [DashboardController::class, 'getAverageDailyRevenue']);
-    });
+// Rute CRUD khusus Admin untuk mengelola Clinic Treatments
+    Route::get('/admin/clinic-treatments', [ConsultController::class, 'indexAdmin']);
+    Route::post('/admin/clinic-treatments', [ConsultController::class, 'storeAdmin']);
+    Route::get('/admin/clinic-treatments/{id}', [ConsultController::class, 'showAdmin']);
+    Route::put('/admin/clinic-treatments/{id}', [ConsultController::class, 'updateAdmin']);
+    Route::delete('/admin/clinic-treatments/{id}', [ConsultController::class, 'destroyAdmin']);
+});
+
+Route::middleware(['auth:sanctum'])->prefix('admin/dashboard')->group(function () {
+    Route::get('/master-data', [DashboardController::class, 'getDashboardMasterData']);
+    // Endpoint lama jika masih dipakai
+    Route::get('/stats', [DashboardController::class, 'getStats']);
+    Route::get('/revenue-chart', [DashboardController::class, 'getRevenueChart']);
+    Route::get('/popular-products', [DashboardController::class, 'getPopularProducts']);
+    Route::get('/predicted-bestsellers', [DashboardController::class, 'getPredictedBestsellers']);
+    Route::get('/recent-activities', [DashboardController::class, 'getRecentActivities']);
+    Route::get('/daily-average', [DashboardController::class, 'getAverageDailyRevenue']);
 });
