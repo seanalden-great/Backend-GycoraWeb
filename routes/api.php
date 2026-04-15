@@ -13,6 +13,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductStockController;
 use App\Http\Controllers\PromoController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TransferReceivePaymentController;
 use App\Http\Controllers\WishlistController;
@@ -168,6 +169,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/admin/invoices/{id}', [InvoiceController::class, 'deleteInvoice']);
 
     Route::post('/promo/verify', [PromoController::class, 'verify']);
+
+    Route::get('/search', [SearchController::class, 'globalSearch']);
 
     Route::middleware(['auth:sanctum'])->prefix('admin/dashboard')->group(function () {
         Route::get('/master-data', [DashboardController::class, 'getDashboardMasterData']);
