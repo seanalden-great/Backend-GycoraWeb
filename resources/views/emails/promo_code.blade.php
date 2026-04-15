@@ -5,7 +5,7 @@
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f9f9f9; padding: 20px;">
     <div style="max-width: 600px; margin: 0 auto; background-color: #fff; padding: 40px; border: 1px solid #eee; border-radius: 10px;">
-        <h2 style="text-align: center; letter-spacing: 4px; color: #111;">S O L H E R</h2>
+        <h2 style="text-align: center; letter-spacing: 4px; color: #111;">G Y C O R A</h2>
         <hr style="border: none; border-top: 1px solid #eaeaea; margin: 30px 0;">
 
         <h3 style="color: #222;">Hello there!</h3>
