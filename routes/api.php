@@ -12,6 +12,7 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductStockController;
+use App\Http\Controllers\PromoController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TransferReceivePaymentController;
 use App\Http\Controllers\WishlistController;
@@ -52,6 +53,8 @@ Route::post('/products/presigned-url', [ProductController::class, 'getPresignedU
 
 Route::post('/biteship/callback', [TransactionController::class, 'biteshipCallback']);
 Route::post('/payments/callback', [PaymentController::class, 'callback']);
+
+Route::post('/promo/claim', [PromoController::class, 'claim']);
 
 // --- PROTECTED ROUTES (Butuh Token Sanctum) ---
 Route::middleware('auth:sanctum')->group(function () {
@@ -163,6 +166,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/admin/invoices/{id}', [InvoiceController::class, 'updateInvoice']);
     Route::post('/admin/invoices/{id}/pay', [InvoiceController::class, 'processPayment']);
     Route::delete('/admin/invoices/{id}', [InvoiceController::class, 'deleteInvoice']);
+
+    Route::post('/promo/verify', [PromoController::class, 'verify']);
 
     Route::middleware(['auth:sanctum'])->prefix('admin/dashboard')->group(function () {
         Route::get('/master-data', [DashboardController::class, 'getDashboardMasterData']);
