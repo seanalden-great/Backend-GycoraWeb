@@ -33,6 +33,16 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/admin/login', [AuthController::class, 'adminLogin']);
 
+// Lupa Password (User)
+Route::post('/forgot-password/send-code', [AuthController::class, 'sendResetCode']);
+Route::post('/forgot-password/verify-code', [AuthController::class, 'verifyResetCode']);
+Route::post('/forgot-password/reset', [AuthController::class, 'resetPassword']);
+
+// Lupa Password (Admin/Staf)
+Route::post('/admin/forgot-password/send-code', [AuthController::class, 'adminSendResetCode']);
+Route::post('/admin/forgot-password/verify-code', [AuthController::class, 'adminVerifyResetCode']);
+Route::post('/admin/forgot-password/reset', [AuthController::class, 'adminResetPassword']);
+
 // POST /api/contact
 Route::post('/contact', [ContactController::class, 'store']);
 Route::post('/subscribe', [ContactController::class, 'subscribe']);
