@@ -176,7 +176,14 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/search', [SearchController::class, 'globalSearch']);
 
-// Rute CRUD khusus Admin untuk mengelola Clinic Treatments
+    // Rute untuk User (Halaman ConsultWithUs.tsx)
+    Route::post('/consultation/log', [ConsultController::class, 'logConsultation']);
+    Route::post('/clinic/appointment', [ConsultController::class, 'bookAppointment']);
+
+    // Rute untuk Admin (Halaman AdminTreatments.tsx) mengambil data notifikasi
+    Route::get('/admin/clinic-notifications', [ConsultController::class, 'getAdminNotifications']);
+
+    // Rute CRUD khusus Admin untuk mengelola Clinic Treatments
     Route::get('/admin/clinic-treatments', [ConsultController::class, 'indexAdmin']);
     Route::post('/admin/clinic-treatments', [ConsultController::class, 'storeAdmin']);
     Route::get('/admin/clinic-treatments/{id}', [ConsultController::class, 'showAdmin']);
