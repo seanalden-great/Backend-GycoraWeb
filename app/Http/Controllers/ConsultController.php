@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ClinicAppointment;
 use App\Models\ClinicTreatment;
+use App\Models\ConsultationLog;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -22,14 +24,14 @@ class ConsultController extends Controller
             ->get();
 
         $faqs = [
-            ["q" => "Apa itu Gycora Care?", "a" => "Gycora Care adalah klinik kesehatan kulit dan rambut terdepan."],
-            ["q" => "Apakah produk dari Gycora aman?", "a" => "Ya, seluruh produk kami diformulasikan oleh tim dokter ahli."],
+            ['q' => 'Apa itu Gycora Care?', 'a' => 'Gycora Care adalah klinik kesehatan kulit dan rambut terdepan.'],
+            ['q' => 'Apakah produk dari Gycora aman?', 'a' => 'Ya, seluruh produk kami diformulasikan oleh tim dokter ahli.'],
         ];
 
         return response()->json([
             'treatments' => $treatments,
             'otc_products' => $otcProducts,
-            'faqs' => $faqs
+            'faqs' => $faqs,
         ]);
     }
 
@@ -40,6 +42,7 @@ class ConsultController extends Controller
     public function indexAdmin(Request $request)
     {
         $treatments = ClinicTreatment::orderBy('created_at', 'desc')->get();
+
         return response()->json($treatments);
     }
 
@@ -77,13 +80,14 @@ class ConsultController extends Controller
 
         return response()->json([
             'message' => 'Clinic Treatment berhasil ditambahkan.',
-            'data' => $treatment
+            'data' => $treatment,
         ], 201);
     }
 
     public function showAdmin($id)
     {
         $treatment = ClinicTreatment::findOrFail($id);
+
         return response()->json($treatment);
     }
 
@@ -120,7 +124,7 @@ class ConsultController extends Controller
 
         return response()->json([
             'message' => 'Clinic Treatment berhasil diperbarui.',
-            'data' => $treatment
+            'data' => $treatment,
         ]);
     }
 
@@ -138,7 +142,55 @@ class ConsultController extends Controller
         $treatment->delete();
 
         return response()->json([
-            'message' => 'Clinic Treatment berhasil dihapus.'
+            'message' => 'Clinic Treatment berhasil dihapus.',
         ]);
+    }
+
+    // Simpan Log Konsultasi
+    public function logConsultation(Request $request)
+    {
+        $request->validate([
+            'category_title' => 'required',
+            'consultation_type' => 'required',
+        ]);
+        $user = auth()->user();
+
+        ConsultationLog::create([
+            'email' => $user->email,
+            'category_title' => $request->category_title,
+            'consultation_type' => $request->consultation_type,
+            'notes' => $request->notes,
+        ]);
+
+        return response()->json(['message' => 'Notifikasi terkirim ke admin.']);
+    }
+
+    // Simpan Janji Temu
+    public function bookAppointment(Request $request)
+    {
+        $request->validate([
+            'treatment_id' => 'required',
+            'appointment_time' => 'required',
+            'reason' => 'required',
+        ]);
+        $user = auth()->user();
+
+        ClinicAppointment::create([
+            'email' => $user->email,
+            'clinic_treatment_id' => $request->treatment_id,
+            'appointment_time' => $request->appointment_time,
+            'reason' => $request->reason,
+        ]);
+
+        return response()->json(['message' => 'Janji temu berhasil dibuat!']);
+    }
+
+    // Ambil Notifikasi untuk Admin
+    public function getAdminNotifications()
+    {
+        $consults = ConsultationLog::latest()->limit(10)->get();
+        $appointments = ClinicAppointment::with('treatment')->latest()->limit(10)->get();
+
+        return response()->json(['consults' => $consults, 'appointments' => $appointments]);
     }
 }
