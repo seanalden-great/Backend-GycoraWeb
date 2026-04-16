@@ -5,25 +5,22 @@ namespace App\Http\Controllers;
 use App\Models\ClinicTreatment;
 use App\Models\Product;
 use Illuminate\Http\Request;
-// use App\Models\Faq; // Buat model ini jika ingin FAQ dinamis
+use Illuminate\Support\Facades\Storage;
 
 class ConsultController extends Controller
 {
     // =========================================================================
-    // ENDPOINT PUBLIK (UNTUK HALAMAN ConsultWithUs)
+    // ENDPOINT PUBLIK
     // =========================================================================
     public function getConsultPageData()
     {
-        // Ambil Treatments aktif
         $treatments = ClinicTreatment::where('is_active', true)->get();
 
-        // Ambil produk OTC (misalnya produk yang tidak butuh resep, kita batasi 4)
         $otcProducts = Product::where('status', 'active')
-            ->where('category_id', 2) // Sesuaikan dengan ID kategori 'Essentials/OTC' Anda
+            ->where('category_id', 2)
             ->limit(4)
             ->get();
 
-        // Dummy FAQ dari Backend (Bisa diganti dari DB)
         $faqs = [
             ["q" => "Apa itu Gycora Care?", "a" => "Gycora Care adalah klinik kesehatan kulit dan rambut terdepan."],
             ["q" => "Apakah produk dari Gycora aman?", "a" => "Ya, seluruh produk kami diformulasikan oleh tim dokter ahli."],
@@ -36,35 +33,45 @@ class ConsultController extends Controller
         ]);
     }
 
-
     // =========================================================================
-    // ENDPOINT ADMIN (MANAJEMEN CLINIC TREATMENTS)
+    // ENDPOINT ADMIN
     // =========================================================================
 
-    // 1. Ambil semua data (Termasuk yang inactive)
     public function indexAdmin(Request $request)
     {
-        // Jika hanya admin yang boleh mengakses, idealnya ada pengecekan role/permission di sini.
-        // if ($request->user()->role !== 'admin') abort(403);
-
         $treatments = ClinicTreatment::orderBy('created_at', 'desc')->get();
         return response()->json($treatments);
     }
 
-    // 2. Simpan data baru
     public function storeAdmin(Request $request)
     {
+        // 1. Validasi input, pastikan 'image' adalah file gambar
         $validatedData = $request->validate([
             'title' => 'required|string|max:255',
             'price' => 'required|numeric|min:0',
-            'image_url' => 'nullable|string', // Bisa menampung path lokal atau URL
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120', // Maksimal 5MB
             'is_active' => 'boolean',
         ]);
 
+        $imageUrl = null;
+
+        // 2. Logika Upload ke S3
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+
+            // Simpan file ke folder 'treatments' di bucket S3.
+            // Gunakan visibility 'public' jika file ingin bisa diakses langsung via URL.
+            $path = Storage::disk('s3')->put('treatments', $file, 'public');
+
+            // Dapatkan URL publik dari S3 untuk disimpan ke database
+            $imageUrl = Storage::disk('s3')->url($path);
+        }
+
+        // 3. Simpan ke Database
         $treatment = ClinicTreatment::create([
             'title' => $validatedData['title'],
             'price' => $validatedData['price'],
-            'image_url' => $validatedData['image_url'] ?? null,
+            'image_url' => $imageUrl,
             'is_active' => $validatedData['is_active'] ?? true,
         ]);
 
@@ -74,14 +81,12 @@ class ConsultController extends Controller
         ], 201);
     }
 
-    // 3. Ambil 1 data spesifik
     public function showAdmin($id)
     {
         $treatment = ClinicTreatment::findOrFail($id);
         return response()->json($treatment);
     }
 
-    // 4. Update data
     public function updateAdmin(Request $request, $id)
     {
         $treatment = ClinicTreatment::findOrFail($id);
@@ -89,9 +94,27 @@ class ConsultController extends Controller
         $validatedData = $request->validate([
             'title' => 'sometimes|required|string|max:255',
             'price' => 'sometimes|required|numeric|min:0',
-            'image_url' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'is_active' => 'boolean',
         ]);
+
+        // Cek jika admin mengunggah gambar baru
+        if ($request->hasFile('image')) {
+            // Opsional: Hapus gambar lama dari S3 untuk menghemat storage
+            if ($treatment->image_url) {
+                // Ekstrak path (key) dari URL untuk dihapus
+                $oldPath = parse_url($treatment->image_url, PHP_URL_PATH);
+                $oldPath = ltrim($oldPath, '/');
+                Storage::disk('s3')->delete($oldPath);
+            }
+
+            $file = $request->file('image');
+            $path = Storage::disk('s3')->put('treatments', $file, 'public');
+            $validatedData['image_url'] = Storage::disk('s3')->url($path);
+        }
+
+        // Hapus key 'image' dari array karena kolom di DB adalah 'image_url'
+        unset($validatedData['image']);
 
         $treatment->update($validatedData);
 
@@ -101,10 +124,17 @@ class ConsultController extends Controller
         ]);
     }
 
-    // 5. Hapus data (Hard delete)
     public function destroyAdmin($id)
     {
         $treatment = ClinicTreatment::findOrFail($id);
+
+        // Opsional: Hapus gambar dari S3 sebelum menghapus record dari DB
+        if ($treatment->image_url) {
+            $path = parse_url($treatment->image_url, PHP_URL_PATH);
+            $path = ltrim($path, '/');
+            Storage::disk('s3')->delete($path);
+        }
+
         $treatment->delete();
 
         return response()->json([
