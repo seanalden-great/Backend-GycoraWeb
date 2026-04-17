@@ -205,6 +205,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/admin/clinic-treatments/{id}', [ConsultController::class, 'destroyAdmin']);
 
     Route::post('/reviews', [ReviewController::class, 'store']);
+
+    // Rute Admin Review
+    Route::get('/admin/reviews', [ReviewController::class, 'indexAdmin']);
+    Route::delete('/admin/reviews/{id}', [ReviewController::class, 'destroyAdmin']);
 });
 
 Route::middleware(['auth:sanctum'])->prefix('admin/dashboard')->group(function () {

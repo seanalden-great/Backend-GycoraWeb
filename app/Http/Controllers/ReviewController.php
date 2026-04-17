@@ -68,4 +68,29 @@ class ReviewController extends Controller
 
         return response()->json(['message' => 'Ulasan berhasil dikirim!', 'data' => $review], 201);
     }
+
+    public function indexAdmin()
+    {
+        // Tarik semua review beserta data user dan nama produknya
+        $reviews = Review::with(['user:id,first_name,last_name,profile_image', 'product:id,name'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json($reviews);
+    }
+
+    public function destroyAdmin($id)
+    {
+        $review = Review::findOrFail($id);
+
+        if ($review->image_url) {
+            $path = parse_url($review->image_url, PHP_URL_PATH);
+            $path = ltrim($path, '/');
+            Storage::disk('s3')->delete($path);
+        }
+
+        $review->delete();
+
+        return response()->json(['message' => 'Ulasan berhasil dihapus.']);
+    }
 }
