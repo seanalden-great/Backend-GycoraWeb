@@ -14,6 +14,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductStockController;
 use App\Http\Controllers\PromoController;
+use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TransferReceivePaymentController;
@@ -70,6 +71,9 @@ Route::post('/promo/claim', [PromoController::class, 'claim']);
 
 // Rute Publik (Bisa diakses Guest / Tanpa Login)
 Route::get('/landing-page/consult', [ConsultController::class, 'getConsultPageData']);
+
+// Rute Publik (Bisa dilihat siapa saja di halaman detail produk)
+Route::get('/products/{product}/reviews', [ReviewController::class, 'getProductReviews']);
 
 // --- PROTECTED ROUTES (Butuh Token Sanctum) ---
 Route::middleware('auth:sanctum')->group(function () {
@@ -199,6 +203,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/admin/clinic-treatments/{id}', [ConsultController::class, 'showAdmin']);
     Route::put('/admin/clinic-treatments/{id}', [ConsultController::class, 'updateAdmin']);
     Route::delete('/admin/clinic-treatments/{id}', [ConsultController::class, 'destroyAdmin']);
+
+    Route::post('/reviews', [ReviewController::class, 'store']);
 });
 
 Route::middleware(['auth:sanctum'])->prefix('admin/dashboard')->group(function () {
