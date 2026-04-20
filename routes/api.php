@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryCoaController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\CoaController;
 use App\Http\Controllers\ConsultController;
 use App\Http\Controllers\ContactController;
@@ -209,6 +210,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // Rute Admin Review
     Route::get('/admin/reviews', [ReviewController::class, 'indexAdmin']);
     Route::delete('/admin/reviews/{id}', [ReviewController::class, 'destroyAdmin']);
+
+    Route::get('/staff-list', [ChatController::class, 'getStaffList']);
+    Route::get('/messages/{userId}', [ChatController::class, 'getMessages']);
+    Route::post('/messages', [ChatController::class, 'sendMessage']);
 });
 
 Route::middleware(['auth:sanctum'])->prefix('admin/dashboard')->group(function () {
