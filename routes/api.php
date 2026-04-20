@@ -22,7 +22,10 @@ use App\Http\Controllers\TransferReceivePaymentController;
 use App\Http\Controllers\WishlistController;
 use App\Models\Subscriber;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
+
+Broadcast::routes(['prefix' => '/api', 'middleware' => ['auth:sanctum']]);
 
 // --- RUTE PUBLIK (Tanpa Token) ---
 Route::post('/register', [AuthController::class, 'register']);
