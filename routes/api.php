@@ -207,6 +207,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/admin/clinic-treatments/{id}', [ConsultController::class, 'showAdmin']);
     Route::put('/admin/clinic-treatments/{id}', [ConsultController::class, 'updateAdmin']);
     Route::delete('/admin/clinic-treatments/{id}', [ConsultController::class, 'destroyAdmin']);
+    Route::put('/admin/clinic-notifications/consults/{id}/status', [ConsultController::class, 'updateConsultStatus']);
+    Route::put('/admin/clinic-notifications/appointments/{id}/status', [ConsultController::class, 'updateAppointmentStatus']);
 
     Route::post('/reviews', [ReviewController::class, 'store']);
 

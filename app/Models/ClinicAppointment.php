@@ -15,6 +15,7 @@ class ClinicAppointment extends Model
         'clinic_treatment_id',
         'appointment_time',
         'reason',
+        'status'
     ];
 
     // Karena di Controller Anda melakukan ->with('treatment'),

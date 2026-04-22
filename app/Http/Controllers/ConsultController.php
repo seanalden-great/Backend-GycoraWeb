@@ -146,12 +146,32 @@ class ConsultController extends Controller
         ]);
     }
 
-    // Simpan Log Konsultasi
+    // // Simpan Log Konsultasi
+    // public function logConsultation(Request $request)
+    // {
+    //     $request->validate([
+    //         'category_title' => 'required',
+    //         'consultation_type' => 'required',
+    //     ]);
+    //     $user = auth()->user();
+
+    //     ConsultationLog::create([
+    //         'email' => $user->email,
+    //         'category_title' => $request->category_title,
+    //         'consultation_type' => $request->consultation_type,
+    //         'notes' => $request->notes,
+    //     ]);
+
+    //     return response()->json(['message' => 'Notifikasi terkirim ke admin.']);
+    // }
+
+    // Simpan Log Konsultasi (Update)
     public function logConsultation(Request $request)
     {
         $request->validate([
             'category_title' => 'required',
             'consultation_type' => 'required',
+            'consultation_time' => 'required', // Tambahan baru
         ]);
         $user = auth()->user();
 
@@ -159,10 +179,12 @@ class ConsultController extends Controller
             'email' => $user->email,
             'category_title' => $request->category_title,
             'consultation_type' => $request->consultation_type,
+            'consultation_time' => $request->consultation_time, // Tambahan baru
             'notes' => $request->notes,
+            'status' => 'pending', // Default
         ]);
 
-        return response()->json(['message' => 'Notifikasi terkirim ke admin.']);
+        return response()->json(['message' => 'Permintaan terkirim!']);
     }
 
     // Simpan Janji Temu
@@ -192,5 +214,23 @@ class ConsultController extends Controller
         $appointments = ClinicAppointment::with('treatment')->latest()->limit(10)->get();
 
         return response()->json(['consults' => $consults, 'appointments' => $appointments]);
+    }
+
+    // Update Status Consult
+    public function updateConsultStatus(Request $request, $id)
+    {
+        $request->validate(['status' => 'required|in:approved,rejected']);
+        $consult = ConsultationLog::findOrFail($id);
+        $consult->update(['status' => $request->status]);
+        return response()->json(['message' => 'Status konsultasi berhasil diperbarui.']);
+    }
+
+    // Update Status Appointment
+    public function updateAppointmentStatus(Request $request, $id)
+    {
+        $request->validate(['status' => 'required|in:approved,rejected']);
+        $appointment = ClinicAppointment::findOrFail($id);
+        $appointment->update(['status' => $request->status]);
+        return response()->json(['message' => 'Status janji temu berhasil diperbarui.']);
     }
 }

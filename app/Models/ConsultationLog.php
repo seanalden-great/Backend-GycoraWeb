@@ -15,5 +15,7 @@ class ConsultationLog extends Model
         'category_title',
         'consultation_type',
         'notes',
+        'consultation_time',
+        'status'
     ];
 }
