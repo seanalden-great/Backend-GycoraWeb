@@ -88,6 +88,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Profil & Users
     Route::get('/admin/users', [AuthController::class, 'getAllUsers']); // Idealnya dibungkus middleware admin lagi
     Route::put('/profile', [AuthController::class, 'updateProfile']);
+    Route::put('/profile', [AuthController::class, 'updateProfileInfo']);
+    // Rute untuk ubah password (jika Anda memakainya)
+    Route::put('/profile/password', [AuthController::class, 'updatePassword']);
     Route::post('/admin/update-info', [AuthController::class, 'updateAdminProfileInfo']);
     Route::post('/admin/presigned-url', [AuthController::class, 'getProfilePresignedUrl']);
     Route::post('/admin/update-image', [AuthController::class, 'updateAdminImage']);
