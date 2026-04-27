@@ -25,7 +25,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
 
-Broadcast::routes(['prefix' => 'api','middleware' => ['auth:sanctum']]);
+Broadcast::routes(['middleware' => ['auth:sanctum']]);
 
 // --- RUTE PUBLIK (Tanpa Token) ---
 Route::post('/register', [AuthController::class, 'register']);
