@@ -93,6 +93,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/profile/image', [AuthController::class, 'updateImage']);
     // Rute untuk ubah password (jika Anda memakainya)
     Route::put('/profile/password', [AuthController::class, 'updatePassword']);
+    Route::get('/admin/users/{id}', [AuthController::class, 'getUserDetail']);
     Route::post('/admin/update-info', [AuthController::class, 'updateAdminProfileInfo']);
     Route::post('/admin/presigned-url', [AuthController::class, 'getProfilePresignedUrl']);
     Route::post('/admin/update-image', [AuthController::class, 'updateAdminImage']);
