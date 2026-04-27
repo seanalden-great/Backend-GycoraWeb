@@ -45,20 +45,47 @@ class ContactController extends Controller
     //     ], 201);
     // }
 
+    // public function store(Request $request)
+    // {
+    //     $data = $request->validate([
+    //         'name' => 'required',
+    //         'email' => 'required|email',
+    //         'phone' => 'nullable',
+    //         'description' => 'required',
+    //     ]);
+
+    //     if ($request->user('sanctum')) {
+    //         $data['user_id'] = $request->user('sanctum')->id;
+    //     }
+
+    //     Contact::create($data);
+
+    //     return response()->json(['message' => 'Message sent successfully'], 201);
+    // }
+
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'name' => 'required',
-            'email' => 'required|email',
-            'phone' => 'nullable',
-            'description' => 'required',
+        // 1. Validasi HANYA dari input yang benar-benar dikirim Frontend (description)
+        $validated = $request->validate([
+            'description' => 'required|string',
         ]);
 
-        if ($request->user('sanctum')) {
-            $data['user_id'] = $request->user('sanctum')->id;
+        // 2. Ambil User dari Token Sanctum (karena form ini wajib login)
+        $user = $request->user('sanctum');
+
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        Contact::create($data);
+        // 3. Simpan data menggunakan informasi profil user langsung dari database
+        Contact::create([
+            'user_id' => $user->id,
+            'name' => trim($user->first_name . ' ' . $user->last_name),
+            'email' => $user->email,
+            'phone' => $user->phone, // Ambil dari database user
+            'description' => $validated['description'],
+            'is_read' => false,
+        ]);
 
         return response()->json(['message' => 'Message sent successfully'], 201);
     }
