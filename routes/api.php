@@ -225,6 +225,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/staff-list', [ChatController::class, 'getStaffList']);
     Route::get('/messages/{userId}', [ChatController::class, 'getMessages']);
     Route::post('/messages', [ChatController::class, 'sendMessage']);
+
+    Route::get('/admin/audit-logs', [\App\Http\Controllers\AuditLogController::class, 'index']);
 });
 
 Route::middleware(['auth:sanctum'])->prefix('admin/dashboard')->group(function () {
