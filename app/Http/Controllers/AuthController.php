@@ -67,7 +67,15 @@ class AuthController extends Controller
         $request->validate([
             'email' => 'required|string|email',
             'password' => 'required|string',
+            'recaptcha_token' => 'required|string' // Wajibkan token dari frontend
         ]);
+
+        // VERIFIKASI RECAPTCHA
+        if (!$this->verifyRecaptcha($request->recaptcha_token)) {
+            return response()->json([
+                'message' => 'Verifikasi keamanan reCAPTCHA gagal. Terdeteksi sebagai aktivitas bot.'
+            ], 403);
+        }
 
         $user = User::where('email', $request->email)->first();
 
@@ -97,7 +105,15 @@ class AuthController extends Controller
         $request->validate([
             'email' => 'required|string|email',
             'password' => 'required|string',
+            'recaptcha_token' => 'required|string' // Wajibkan token
         ]);
+
+        // VERIFIKASI RECAPTCHA
+        if (!$this->verifyRecaptcha($request->recaptcha_token)) {
+            return response()->json([
+                'message' => 'Akses diblokir. Verifikasi reCAPTCHA gagal.'
+            ], 403);
+        }
 
         $user = User::where('email', $request->email)->first();
 
@@ -679,5 +695,30 @@ class AuthController extends Controller
         DB::table('password_reset_codes')->where('email', $request->email)->delete();
 
         return response()->json(['message' => 'Kata sandi berhasil disetel ulang.']);
+    }
+
+    // Helper reCAPTCHA v3
+    private function verifyRecaptcha($token)
+    {
+        // Hindari verifikasi jika sedang di environment testing
+        if (app()->environment('testing')) return true;
+        if (!$token) return false;
+
+        $secretKey = env('RECAPTCHA_SECRET_KEY'); // Pastikan ini ada di .env Laravel
+        $response = \Illuminate\Support\Facades\Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+            'secret' => $secretKey,
+            'response' => $token,
+        ]);
+
+        $result = $response->json();
+
+        // Cek success dan pastikan score (skor keamanan bot) >= 0.5
+        // Score 1.0 (Pasti Manusia), 0.0 (Pasti Bot)
+        if (isset($result['success']) && $result['success'] == true) {
+             if (isset($result['score']) && $result['score'] >= 0.5) {
+                 return true;
+             }
+        }
+        return false;
     }
 }
