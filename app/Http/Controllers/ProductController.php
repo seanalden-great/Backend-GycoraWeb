@@ -1006,6 +1006,7 @@ class ProductController extends Controller
             'benefits' => 'nullable|string',
             'price' => 'required|numeric|min:0',
             'discount_price' => 'nullable|numeric|min:0', // Tambahkan validasi
+            'voucher_discount_price' => 'nullable|numeric|min:0', // <--- BARU
             'stock' => 'required|integer|min:0',
             'image_url' => 'nullable|string',
             'variant_video' => 'nullable|string',
@@ -1057,6 +1058,7 @@ class ProductController extends Controller
             'benefits' => 'nullable|string',
             'price' => 'required|numeric|min:0',
             'discount_price' => 'nullable|numeric|min:0', // Tambahkan validasi
+            'voucher_discount_price' => 'nullable|numeric|min:0', // <--- BARU
             'image_url' => 'nullable|string',
             'variant_video' => 'nullable|string',
             'color' => 'nullable|array',

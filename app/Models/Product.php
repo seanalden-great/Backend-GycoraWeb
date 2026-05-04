@@ -90,6 +90,7 @@ class Product extends Model
         'benefits',
         'price',
         'discount_price', // Tambahkan field ini
+        'voucher_discount_price',
         'stock',
         'image_url',
         'variant_images',
@@ -101,6 +102,7 @@ class Product extends Model
     protected $casts = [
         'price' => 'decimal:2',
         'discount_price' => 'decimal:2', // Casting juga sebagai decimal
+        'voucher_discount_price' => 'decimal:2',
         'stock' => 'integer',
         'variant_images' => 'array',
         'color' => 'array',
