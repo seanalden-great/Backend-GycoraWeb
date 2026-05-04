@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AddressController;
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryCoaController;
@@ -67,6 +68,7 @@ Route::get('/products/inactive', [ProductController::class, 'inactiveProducts'])
 
 Route::get('/products/{id}', [ProductController::class, 'show']);
 Route::post('/products/presigned-url', [ProductController::class, 'getPresignedUrl'])->middleware('auth:sanctum');
+Route::get('/products/{id}/variants', [ProductController::class, 'getRelatedVariants']);
 
 Route::post('/biteship/callback', [TransactionController::class, 'biteshipCallback']);
 Route::post('/payments/callback', [PaymentController::class, 'callback']);
@@ -134,7 +136,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/products/{id}', [ProductController::class, 'destroy']);
     Route::put('/products/{id}/restore', [ProductController::class, 'restore']);
     Route::delete('/products/{id}/force', [ProductController::class, 'forceDelete']);
-    Route::get('/products/{id}/variants', [ProductController::class, 'getRelatedVariants']);
 
     Route::get('/admin/product-stocks', [ProductStockController::class, 'index']);
     Route::post('/admin/product-stocks/{productId}', [ProductStockController::class, 'store']);
@@ -227,7 +228,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/messages/{userId}', [ChatController::class, 'getMessages']);
     Route::post('/messages', [ChatController::class, 'sendMessage']);
 
-    Route::get('/admin/audit-logs', [\App\Http\Controllers\AuditLogController::class, 'index']);
+    Route::get('/admin/audit-logs', [AuditLogController::class, 'index']);
 });
 
 Route::middleware(['auth:sanctum'])->prefix('admin/dashboard')->group(function () {
