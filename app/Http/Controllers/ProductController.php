@@ -1120,4 +1120,60 @@ class ProductController extends Controller
             return response()->json(['message' => 'Produk tidak bisa dihapus karena sudah memiliki riwayat transaksi'], 422);
         }
     }
+
+    // FUNGSI BARU UNTUK MENDAPATKAN VARIAN (PRODUK SAUDARA)
+    public function getRelatedVariants($id)
+    {
+        try {
+            $product = Product::findOrFail($id);
+
+            // 1. Ekstrak nama warna dari atribut JSON 'color'
+            $colorName = '';
+            if (is_array($product->color) && count($product->color) > 0) {
+                $firstColor = $product->color[0];
+                if (isset($firstColor['name']) && !empty($firstColor['name'])) {
+                    $colorName = trim($firstColor['name']);
+                }
+            }
+
+            $baseName = $product->name; // Set default awal
+
+            // 2. Logika Dinamis: Hapus "Nama Warna" dari "Nama Produk Lengkap"
+            if (!empty($colorName)) {
+                // Kita gunakan Regex untuk mencari dan menghapus nama warna yang berada di PALING AKHIR teks (case-insensitive)
+                // Contoh: "Gycora Shampoo Rose Gold" dikurangi "Rose Gold" -> "Gycora Shampoo"
+                $pattern = '/' . preg_quote($colorName, '/') . '$/i';
+                $baseName = preg_replace($pattern, '', $product->name);
+                $baseName = trim($baseName);
+
+                // Jaga-jaga jika hasilnya kosong
+                if (empty($baseName)) {
+                    $baseName = $product->name;
+                }
+            } else {
+                // Fallback: Jika kebetulan produk lama tidak punya nama warna, kita buang 1 kata paling akhir
+                $nameParts = explode(' ', $product->name);
+                if (count($nameParts) > 1) {
+                    array_pop($nameParts);
+                    $baseName = implode(' ', $nameParts);
+                }
+            }
+
+            // 3. Cari produk sekeluarga berdasarkan Base Name murni yang sudah didapat
+            $relatedProducts = Product::where('status', 'active')
+                ->where('category_id', $product->category_id)
+                ->where('name', 'like', $baseName . '%')
+                ->get(['id', 'name', 'slug', 'color', 'image_url']);
+
+            return response()->json([
+                'status' => 'success',
+                'current_product' => $product,
+                'base_name_detected' => $baseName, // (Opsional) Mengirim base name untuk kemudahan debugging
+                'variants' => $relatedProducts
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
+    }
 }

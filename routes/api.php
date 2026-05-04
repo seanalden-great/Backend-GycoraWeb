@@ -134,6 +134,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/products/{id}', [ProductController::class, 'destroy']);
     Route::put('/products/{id}/restore', [ProductController::class, 'restore']);
     Route::delete('/products/{id}/force', [ProductController::class, 'forceDelete']);
+    Route::get('/products/{id}/variants', [ProductController::class, 'getRelatedVariants']);
 
     Route::get('/admin/product-stocks', [ProductStockController::class, 'index']);
     Route::post('/admin/product-stocks/{productId}', [ProductStockController::class, 'store']);
