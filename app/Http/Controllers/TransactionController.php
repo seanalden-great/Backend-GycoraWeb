@@ -474,12 +474,12 @@ class TransactionController extends Controller
             $lockedUser = \App\Models\User::lockForUpdate()->find($user->id);
 
             // =========================================================================
-            // [LOGIKA BARU] 1. TENTUKAN TIPE PROMO YANG DIGUNAKAN
+            // 1. TENTUKAN TIPE PROMO
             // =========================================================================
-            $promoType = $request->promo_type ?? null; // Dikirim dari Frontend (bisa 'claim', 'voucher', atau null)
+            $promoType = $request->promo_type ?? null;
             $inputCode = !empty($request->promo_code) ? strtoupper($request->promo_code) : null;
 
-            $promoDiscountAmount = 0; // Potongan Global (Hanya untuk 'claim')
+            $promoDiscountAmount = 0;
             $appliedPromoCode = null;
 
             if ($inputCode && $promoType === 'claim') {
@@ -510,38 +510,105 @@ class TransactionController extends Controller
 
 
             // =========================================================================
-            // [LOGIKA BARU] 2. HITUNG TOTAL HARGA BARANG (Sambil Menerapkan Harga Khusus)
+            // 2. HITUNG TOTAL HARGA (Pre-calculation)
             // =========================================================================
             $totalAmount = 0;
-            $xenditItems = [];
 
             foreach ($cartItems as $item) {
-                // Kunci produk dari race-condition restock
-                $product = Product::lockForUpdate()->find($item->product_id);
-                if ($product->stock < $item->quantity) {
-                    throw new \Exception("Stok {$product->name} tidak mencukupi");
+                // Pastikan produk ada dan stok cukup sebelum melangkah lebih jauh
+                $product = Product::find($item->product_id);
+                if (!$product || $product->stock < $item->quantity) {
+                    throw new \Exception("Stok tidak mencukupi untuk item di keranjang Anda.");
                 }
 
-                // Default Harga
                 $priceToUse = $product->discount_price ?? $product->price;
 
-                // JIKA pakai 'voucher' dan produk ini punya 'voucher_discount_price', timpa harganya!
                 if ($promoType === 'voucher' && $product->voucher_discount_price > 0) {
                     $priceToUse = $product->voucher_discount_price;
                 }
 
                 $totalAmount += ($priceToUse * $item->quantity);
+            }
 
-                // Rekam Detail Transaksi dengan Harga Final
+            // =========================================================================
+            // 3. POTONG DISKON GLOBAL (HANYA UNTUK PROMO 'CLAIM')
+            // =========================================================================
+            if ($promoType === 'claim') {
+                if ($totalAmount < 50000) {
+                     throw new \Exception('Minimum belanja Rp 50.000 untuk menggunakan promo ini.');
+                }
+                $promoDiscountAmount = min(250000, $totalAmount);
+            }
+
+            $totalAfterPromo = max(0, $totalAmount - $promoDiscountAmount);
+
+            // =========================================================================
+            // 4. POTONG POIN LOYALTY
+            // =========================================================================
+            $orderId = 'SOL-'.now()->format('Ymd').'-'.strtoupper(Str::random(6));
+            $earnedPoints = $lockedUser->is_membership ? floor($totalAmount / 100000) : 0;
+            $pointsUsed = 0;
+            $pointDiscountAmount = 0;
+
+            if ($request->use_points > 0 && $lockedUser->is_membership) {
+                $pointsUsed = min($request->use_points, $lockedUser->point);
+                $maxUsableDiscount = min($pointsUsed * 1000, $totalAfterPromo);
+                $pointDiscountAmount = $maxUsableDiscount;
+                $pointsUsed = floor($maxUsableDiscount / 1000);
+
+                if ($pointsUsed > 0) {
+                    $lockedUser->decrement('point', $pointsUsed);
+                }
+            }
+
+            $totalQuantity = $cartItems->sum('quantity') ?: 1;
+            $baseShippingRate = $request->shipping_method === 'free' ? 0 : ($request->shipping_cost ?? 0);
+            $totalShippingCost = $baseShippingRate * $totalQuantity;
+
+            // =========================================================================
+            // 5. SIMPAN TRANSAKSI UTAMA TERLEBIH DAHULU (PENTING!)
+            // =========================================================================
+            $transaction = Transaction::create([
+                'user_id' => $lockedUser->id,
+                'address_id' => $request->address_id,
+                'shipping_method' => $request->shipping_method,
+                'shipping_cost' => $totalShippingCost,
+                'courier_company' => $request->shipping_method === 'free' ? 'Internal' : $request->courier_company,
+                'courier_type' => $request->shipping_method === 'free' ? 'Next Day' : $request->courier_type,
+                'delivery_type' => $request->shipping_method === 'free' ? 'later' : ($request->delivery_type ?? 'later'),
+                'order_id' => $orderId,
+                'total_amount' => $totalAmount,
+                'status' => 'pending',
+                'point' => $earnedPoints,
+                'points_used' => $pointsUsed,
+                'promo_code' => $appliedPromoCode,
+                'promo_discount' => $promoDiscountAmount,
+            ]);
+
+            // =========================================================================
+            // 6. LOOPING UNTUK POTONG STOK & SIMPAN DETAIL TRANSAKSI
+            // =========================================================================
+            $xenditItems = [];
+
+            foreach ($cartItems as $item) {
+                // Kunci produk untuk update stok dengan aman
+                $product = Product::lockForUpdate()->find($item->product_id);
+
+                $priceToUse = $product->discount_price ?? $product->price;
+                if ($promoType === 'voucher' && $product->voucher_discount_price > 0) {
+                    $priceToUse = $product->voucher_discount_price;
+                }
+
+                // Simpan Detail dengan ID Transaksi yang sudah dibuat
                 TransactionDetail::create([
-                    'transaction_id' => null, // Akan di-update nanti setelah Transaksi dibuat
+                    'transaction_id' => $transaction->id, // <--- KINI ID TERISI!
                     'product_id' => $item->product_id,
                     'quantity' => $item->quantity,
-                    'price' => $priceToUse, // Harga yang sudah disesuaikan
+                    'price' => $priceToUse,
                     'color' => $item->color,
                 ]);
 
-                // ... (BLOK KODE PEMOTONGAN STOK ANDA TETAP SAMA DI SINI) ...
+                // Logika Pemotongan Stok
                 $remainingQuantityToDeduct = $item->quantity;
                 $totalBatchQuantity = ProductStock::where('product_id', $product->id)->sum('quantity');
                 $legacyStock = $product->stock - $totalBatchQuantity;
@@ -571,15 +638,14 @@ class TransactionController extends Controller
                     }
                 }
 
+                // Potong stok utama
                 $product->decrement('stock', $item->quantity);
 
                 // =========================================================================
                 // [BARU] LOW STOCK ALERT TRIGGER
                 // =========================================================================
-                // Jika stok sisa 5 atau kurang, kirim notifikasi ke Admin
                 if ($product->stock <= 5) {
                     try {
-                        // Idealnya email admin diambil dari database/config, ini contoh hardcode
                         \Illuminate\Support\Facades\Mail::to('gycora.essence@gmail.com')
                             ->send(new \App\Mail\LowStockAlertMail($product));
 
@@ -589,7 +655,7 @@ class TransactionController extends Controller
                     }
                 }
 
-                // Format nama produk untuk Xendit
+                // Format Xendit Items
                 $productName = $product->name;
                 if (!empty($item->color)) { $productName .= ' - ' . $item->color; }
 
@@ -600,66 +666,6 @@ class TransactionController extends Controller
                     'category' => 'PHYSICAL_PRODUCT',
                 ];
             }
-
-
-            // =========================================================================
-            // 3. POTONG DISKON GLOBAL (HANYA UNTUK PROMO 'CLAIM')
-            // =========================================================================
-            if ($promoType === 'claim') {
-                if ($totalAmount < 50000) {
-                     throw new \Exception('Minimum belanja Rp 50.000 untuk menggunakan promo ini.');
-                }
-                $promoDiscountAmount = min(250000, $totalAmount); // Maksimal potongan Rp 250rb
-            }
-
-            $totalAfterPromo = max(0, $totalAmount - $promoDiscountAmount);
-
-            // =========================================================================
-            // 4. POTONG POIN LOYALTY (Dari Sisa Harga Setelah Promo)
-            // =========================================================================
-            $orderId = 'SOL-'.now()->format('Ymd').'-'.strtoupper(Str::random(6));
-            $earnedPoints = $lockedUser->is_membership ? floor($totalAmount / 100000) : 0;
-            $pointsUsed = 0;
-            $pointDiscountAmount = 0;
-
-            if ($request->use_points > 0 && $lockedUser->is_membership) {
-                $pointsUsed = min($request->use_points, $lockedUser->point);
-                $maxUsableDiscount = min($pointsUsed * 1000, $totalAfterPromo);
-                $pointDiscountAmount = $maxUsableDiscount;
-                $pointsUsed = floor($maxUsableDiscount / 1000);
-
-                if ($pointsUsed > 0) {
-                    $lockedUser->decrement('point', $pointsUsed);
-                }
-            }
-
-            // Hitung Ongkir
-            $totalQuantity = $cartItems->sum('quantity') ?: 1;
-            $baseShippingRate = $request->shipping_method === 'free' ? 0 : ($request->shipping_cost ?? 0);
-            $totalShippingCost = $baseShippingRate * $totalQuantity;
-
-            // =========================================================================
-            // 5. SIMPAN TRANSAKSI
-            // =========================================================================
-            $transaction = Transaction::create([
-                'user_id' => $lockedUser->id,
-                'address_id' => $request->address_id,
-                'shipping_method' => $request->shipping_method,
-                'shipping_cost' => $totalShippingCost,
-                'courier_company' => $request->shipping_method === 'free' ? 'Internal' : $request->courier_company,
-                'courier_type' => $request->shipping_method === 'free' ? 'Next Day' : $request->courier_type,
-                'delivery_type' => $request->shipping_method === 'free' ? 'later' : ($request->delivery_type ?? 'later'),
-                'order_id' => $orderId,
-                'total_amount' => $totalAmount, // Harga Subtotal Murni
-                'status' => 'pending',
-                'point' => $earnedPoints,
-                'points_used' => $pointsUsed,
-                'promo_code' => $appliedPromoCode,
-                'promo_discount' => $promoDiscountAmount, // Hanya terisi jika promo_type = 'claim'
-            ]);
-
-            // Update Transaction ID di tabel Details
-            TransactionDetail::whereNull('transaction_id')->update(['transaction_id' => $transaction->id]);
 
             return [
                 'transaction' => $transaction,
