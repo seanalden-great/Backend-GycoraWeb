@@ -199,7 +199,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/invoices/{id}/pay', [InvoiceController::class, 'processPayment']);
     Route::delete('/admin/invoices/{id}', [InvoiceController::class, 'deleteInvoice']);
 
-    Route::post('/promo/verify', [PromoController::class, 'verify']);
+    // Route::post('/promo/verify', [PromoController::class, 'verify']);
+    Route::post('/promo/verify', [PromoController::class, 'verify'])->middleware('throttle:5,1'));
 
     Route::get('/search', [SearchController::class, 'globalSearch']);
 
