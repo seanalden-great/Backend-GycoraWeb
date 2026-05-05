@@ -1176,4 +1176,22 @@ class ProductController extends Controller
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
     }
+
+    // FUNGSI BARU: MENGAMBIL PRODUK DENGAN STOK KRITIS (<= 5)
+    public function getLowStockProducts()
+    {
+        try {
+            $products = Product::where('status', 'active')
+                ->where('stock', '<=', 5)
+                ->orderBy('stock', 'asc')
+                ->get(['id', 'name', 'sku', 'stock', 'image_url']);
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $products
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
+    }
 }

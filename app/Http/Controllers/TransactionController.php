@@ -573,6 +573,22 @@ class TransactionController extends Controller
 
                 $product->decrement('stock', $item->quantity);
 
+                // =========================================================================
+                // [BARU] LOW STOCK ALERT TRIGGER
+                // =========================================================================
+                // Jika stok sisa 5 atau kurang, kirim notifikasi ke Admin
+                if ($product->stock <= 5) {
+                    try {
+                        // Idealnya email admin diambil dari database/config, ini contoh hardcode
+                        \Illuminate\Support\Facades\Mail::to('gycora.essence@gmail.com')
+                            ->send(new \App\Mail\LowStockAlertMail($product));
+
+                        \Illuminate\Support\Facades\Log::warning("Low Stock Alert sent for Product: {$product->name} (Sisa: {$product->stock})");
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error('Gagal kirim email low stock: ' . $e->getMessage());
+                    }
+                }
+
                 // Format nama produk untuk Xendit
                 $productName = $product->name;
                 if (!empty($item->color)) { $productName .= ' - ' . $item->color; }
