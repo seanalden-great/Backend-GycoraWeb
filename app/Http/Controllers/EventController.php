@@ -61,7 +61,8 @@ class EventController extends Controller
         // [BARU] Logika Upload File ke Clever Cloud (Cellar / S3)
         if ($request->hasFile('image_url')) {
             // 's3' merujuk pada konfigurasi filesystem Clever Cloud Cellar di .env
-            $path = $request->file('image_url')->store('events', 's3');
+            // $path = $request->file('image_url')->store('events', 's3');
+            $path = $request->file('image_url')->storePublicly('events', 's3');
             $data['image_url'] = Storage::disk('s3')->url($path);
         }
 
@@ -110,7 +111,8 @@ class EventController extends Controller
             // Hapus gambar lama dari storage jika perlu
             // if ($event->image_url) { ... }
 
-            $path = $request->file('image_url')->store('events', 's3');
+            // $path = $request->file('image_url')->store('events', 's3');
+            $path = $request->file('image_url')->storePublicly('events', 's3');
             $data['image_url'] = Storage::disk('s3')->url($path);
         }
 
