@@ -11,6 +11,7 @@ use App\Http\Controllers\CoaController;
 use App\Http\Controllers\ConsultController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EventController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
@@ -80,6 +81,9 @@ Route::get('/landing-page/consult', [ConsultController::class, 'getConsultPageDa
 
 // Rute Publik (Bisa dilihat siapa saja di halaman detail produk)
 Route::get('/products/{product}/reviews', [ReviewController::class, 'getProductReviews']);
+
+// Public Route
+Route::get('/events', [EventController::class, 'index']);
 
 // --- PROTECTED ROUTES (Butuh Token Sanctum) ---
 Route::middleware('auth:sanctum')->group(function () {
@@ -231,6 +235,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/messages', [ChatController::class, 'sendMessage']);
 
     Route::get('/admin/audit-logs', [AuditLogController::class, 'index']);
+
+    // Admin Routes (Sebaiknya di dalam middleware auth/admin)
+    Route::post('/admin/events', [EventController::class, 'store']);
+    Route::put('/admin/events/{id}', [EventController::class, 'update']);
+    Route::delete('/admin/events/{id}', [EventController::class, 'destroy']);
 });
 
 Route::middleware(['auth:sanctum'])->prefix('admin/dashboard')->group(function () {
