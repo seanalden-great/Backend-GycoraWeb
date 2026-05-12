@@ -199,12 +199,12 @@ namespace App\Http\Controllers;
 use App\Mail\PromoCodeMail;
 use App\Models\PromoClaim;
 use App\Models\PromoCode; // [BARU] Tambahkan model PromoCode
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
-use Carbon\Carbon; // [BARU] Untuk cek expired date
+use Illuminate\Support\Str; // [BARU] Untuk cek expired date
 
 class PromoController extends Controller
 {
@@ -212,8 +212,8 @@ class PromoController extends Controller
     {
         // ... (Fungsi claim untuk Pop-up tetap SAMA PERSIS seperti sebelumnya) ...
         $request->validate(['email' => 'required|email']);
-        $discountValue = 250000;
-
+        $discountValue = 10;
+        
         $exists = PromoClaim::where('email', $request->email)->first();
         if ($exists) {
             return response()->json(['message' => 'Email ini sudah mengklaim promo sebelumnya.'], 400);
@@ -222,9 +222,10 @@ class PromoController extends Controller
         $code = 'GYCORA-'.strtoupper(Str::random(6));
 
         try {
-            Mail::to($request->email)->send(new \App\Mail\PromoCodeMail($code, $discountValue));
+            Mail::to($request->email)->send(new PromoCodeMail($code, $discountValue));
         } catch (\Exception $e) {
             Log::error('Failed to send promo email to '.$request->email.': '.$e->getMessage());
+
             return response()->json(['message' => 'Gagal mengirim email. Pastikan alamat email valid atau coba lagi nanti.'], 500);
         }
 
@@ -258,10 +259,11 @@ class PromoController extends Controller
             if ($claim->is_used) {
                 return response()->json(['message' => 'This subscriber promo code has already been used.'], 400);
             }
+
             return response()->json([
                 'message' => 'Subscriber Promo applied successfully!',
                 'discount_value' => $claim->discount_value,
-                'promo_type' => 'claim'
+                'promo_type' => 'claim',
             ]);
         }
 
@@ -281,7 +283,7 @@ class PromoController extends Controller
             return response()->json([
                 'message' => 'Voucher Promo applied successfully!',
                 'discount_value' => $voucher->discount_value,
-                'promo_type' => 'voucher'
+                'promo_type' => 'voucher',
             ]);
         }
 

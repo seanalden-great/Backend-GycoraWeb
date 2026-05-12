@@ -5,8 +5,12 @@
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f9f9f9; padding: 20px;">
     <div style="max-width: 600px; margin: 0 auto; background-color: #fff; padding: 40px; border: 1px solid #eee; border-radius: 10px;">
-        <h2 style="text-align: center; letter-spacing: 4px; color: #111;">G Y C O R A</h2>
-        <hr style="border: none; border-top: 1px solid #eaeaea; margin: 30px 0;">
+
+        <div style="text-align: center; margin-bottom: 30px;">
+            <img src="{{ asset('assets/logo.png') }}" alt="Gycora Logo" style="max-height: 50px;">
+        </div>
+
+        <hr style="border: none; border-top: 1px solid #eaeaea; margin: 20px 0;">
 
         <h3 style="color: #222;">Hello there!</h3>
         <p style="color: #555;">Thank you for subscribing to Gycora. As promised, here is your exclusive promo code for your first order:</p>
@@ -18,7 +22,8 @@
         </div>
 
         <p style="text-align: center; color: #666; font-size: 14px;">
-            Use this code at checkout to get <strong>Rp {{ number_format($discountValue, 0, ',', '.') }} OFF</strong>.
+            Gunakan kode ini saat checkout untuk mendapatkan diskon <br/>
+            <strong>{{ $discountValue }}% OFF + Subsidi Ongkir Rp 10.000</strong>.
         </p>
 
         <br>
