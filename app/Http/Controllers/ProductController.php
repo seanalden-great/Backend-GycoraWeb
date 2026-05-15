@@ -1023,7 +1023,8 @@ class ProductController extends Controller
             $data = $request->all();
 
             if (empty($data['slug'])) {
-                $data['slug'] = Str::slug($data['name']) . '-' . Str::random(5);
+                // $data['slug'] = Str::slug($data['name']) . '-' . Str::random(5);
+                $data['slug'] = Str::slug($data['name']);
             }
 
             $product = Product::create($data);
@@ -1072,7 +1073,8 @@ class ProductController extends Controller
         $data = $request->except(['stock', '_method']);
 
         if ($request->has('name') && $request->name !== $product->name) {
-            $data['slug'] = Str::slug($data['name']) . '-' . Str::random(5);
+            // $data['slug'] = Str::slug($data['name']) . '-' . Str::random(5);
+            $data['slug'] = Str::slug($request->name);
         }
 
         if ($request->has('image_url') && $request->image_url !== $product->image_url && $product->image_url) {
