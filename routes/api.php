@@ -67,9 +67,9 @@ Route::get('/products', [ProductController::class, 'index']);
 
 Route::get('/products/inactive', [ProductController::class, 'inactiveProducts']);
 
-Route::get('/products/{id}', [ProductController::class, 'show']);
+Route::get('/products/{slug}', [ProductController::class, 'show']);
 Route::post('/products/presigned-url', [ProductController::class, 'getPresignedUrl'])->middleware('auth:sanctum');
-Route::get('/products/{id}/variants', [ProductController::class, 'getRelatedVariants']);
+Route::get('/products/{slug}/variants', [ProductController::class, 'getRelatedVariants']);
 
 Route::post('/biteship/callback', [TransactionController::class, 'biteshipCallback']);
 Route::post('/payments/callback', [PaymentController::class, 'callback']);

@@ -954,12 +954,12 @@ class ProductController extends Controller
         return response()->json($products, 200);
     }
 
-    public function show($id)
+    public function show($slug)
     {
         try {
             $product = Product::with(['category', 'stocks' => function ($q) {
                 $q->orderBy('created_at', 'asc');
-            }])->findOrFail($id);
+            }])->where('slug', $slug)->firstOrFail();
 
             return response()->json(['status' => 'success', 'data' => $product], 200);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
@@ -1122,10 +1122,10 @@ class ProductController extends Controller
     }
 
     // FUNGSI BARU UNTUK MENDAPATKAN VARIAN (PRODUK SAUDARA)
-    public function getRelatedVariants($id)
+    public function getRelatedVariants($slug)
     {
         try {
-            $product = Product::findOrFail($id);
+            $product = Product::where('slug', $slug)->firstOrFail();
 
             // 1. Ekstrak nama warna dari atribut JSON 'color'
             $colorName = '';

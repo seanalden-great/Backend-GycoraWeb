@@ -7,7 +7,7 @@
     <div style="max-width: 600px; margin: 0 auto; background-color: #fff; padding: 40px; border: 1px solid #eee; border-radius: 10px;">
 
         <div style="text-align: center; margin-bottom: 30px;">
-            <img src="https://backend-gycora-web.vercel.app/logo.png" alt="Gycora" style="max-height: 50px; display: block; margin: 0 auto; border: none; outline: none; text-decoration: none;">
+            <img src="{{ $message->embed(public_path('assets/logo.png')) }}" alt="Gycora Logo" style="max-height: 50px;">
         </div>
 
         <hr style="border: none; border-top: 1px solid #eaeaea; margin: 20px 0;">
