@@ -80,7 +80,8 @@ Route::post('/promo/claim', [PromoController::class, 'claim']);
 Route::get('/landing-page/consult', [ConsultController::class, 'getConsultPageData']);
 
 // Rute Publik (Bisa dilihat siapa saja di halaman detail produk)
-Route::get('/products/{product}/reviews', [ReviewController::class, 'getProductReviews']);
+// Route::get('/products/{product}/reviews', [ReviewController::class, 'getProductReviews']);
+Route::get('/products/{slug}/reviews', [ReviewController::class, 'getProductReviews']);
 
 // Public Route
 Route::get('/events', [EventController::class, 'index']);

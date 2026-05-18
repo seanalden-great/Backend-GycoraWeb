@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product;
 use App\Models\Review;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -9,10 +10,39 @@ use Illuminate\Support\Facades\Storage;
 class ReviewController extends Controller
 {
     // Mengambil ulasan untuk halaman Product Detail
-    public function getProductReviews($productId)
+    // public function getProductReviews($productId)
+    // {
+    //     $reviews = Review::with('user:id,first_name,last_name,profile_image')
+    //         ->where('product_id', $productId)
+    //         ->latest()
+    //         ->get();
+
+    //     // Hitung rata-rata rating
+    //     $average = $reviews->avg('rating');
+    //     $total = $reviews->count();
+
+    //     return response()->json([
+    //         'reviews' => $reviews,
+    //         'average_rating' => round($average, 1),
+    //         'total_reviews' => $total
+    //     ]);
+    // }
+
+    public function getProductReviews($slug)
     {
+        // 1. Cari produk berdasarkan slug terlebih dahulu
+        $product = Product::where('slug', $slug)->first();
+
+        // 2. Jika produk tidak ditemukan, kembalikan error 404
+        if (!$product) {
+            return response()->json([
+                'message' => 'Produk tidak ditemukan'
+            ], 404);
+        }
+
+        // 3. Ambil review menggunakan ID dari produk yang ditemukan
         $reviews = Review::with('user:id,first_name,last_name,profile_image')
-            ->where('product_id', $productId)
+            ->where('product_id', $product->id)
             ->latest()
             ->get();
 
